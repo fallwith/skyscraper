@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+set -x
+
+export SKYSCRAPER_HOME="$(cd "$(dirname "$0")/../.." && pwd)"
+source "${SKYSCRAPER_HOME}/supplementary/workflows/core.sh"
+
+_test_android() {
+   local -r res="$(file "$TARGET_BIN")"
+   echo "$res" 
+   echo "$res" | grep "$1"
+}
+
+main() {
+   case "${1:-}" in
+      "android-aarch64") _test_android "aarch64";;
+      "android-arm") _test_android "ARM" ;;
+      *) Skyscraper -h | grep 'Running' ;;
+   esac
+}
+
+main "$@"

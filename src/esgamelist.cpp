@@ -23,108 +23,116 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
-#include "nametools.h"
 #include "esgamelist.h"
+
+#include "nametools.h"
 
 #include <QDir>
 
-ESGameList::ESGameList(Settings *config,
-		       QSharedPointer<NetManager> manager)
-  : AbstractScraper(config, manager)
-{
-  baseUrl = config->gameListFolder + (config->gameListFolder.right(1) != "/"?"/":"");
-  QString gameListXml = baseUrl + "gamelist.xml";
-  if(!QFileInfo::exists(gameListXml)) {
-    baseUrl = "import/" + config->platform + "/";
-    gameListXml = baseUrl + "gamelist.xml";
-  }
-  QDomDocument xmlDoc;
-  QFile gameListFile(gameListXml);
-  if(gameListFile.open(QIODevice::ReadOnly)) {
-    xmlDoc.setContent(&gameListFile);
-    gameListFile.close();
-    games = xmlDoc.elementsByTagName("game");
-  }
+ESGameList::ESGameList(Settings *config, QSharedPointer<NetManager> manager)
+    : AbstractScraper(config, manager, MatchType::MATCH_ONE) {
+    baseUrl = config->gameListFolder +
+              (config->gameListFolder.right(1) != "/" ? "/" : "");
+    QString gameListXml = baseUrl + "gamelist.xml";
+    if (!QFileInfo::exists(gameListXml)) {
+        baseUrl = "import/" + config->platform + "/";
+        gameListXml = baseUrl + "gamelist.xml";
+    }
+    QDomDocument xmlDoc;
+    QFile gameListFile(gameListXml);
+    if (gameListFile.open(QIODevice::ReadOnly)) {
+        xmlDoc.setContent(&gameListFile);
+        gameListFile.close();
+        games = xmlDoc.elementsByTagName("game");
+    }
 }
 
 void ESGameList::getSearchResults(QList<GameEntry> &gameEntries,
-				  QString searchName, QString platform) {
-  if(games.isEmpty())
-    return;
+                                  QString searchName, QString platform) {
+    if (games.isEmpty())
+        return;
 
-  gameNode.clear();
+    gameNode.clear();
 
-  for(int i = 0; i < games.size(); ++i) {
-    // Find <game> where last part of <path> matches file name
-    QFileInfo info(games.item(i).firstChildElement("path").text());
-    if(info.fileName() == searchName) {
-      gameNode = games.item(i);
-      GameEntry game;
-      game.title = gameNode.firstChildElement("name").text();
-      game.platform = platform;
-      gameEntries.append(game);
-      break;
+    for (int i = 0; i < games.size(); ++i) {
+        // Find <game> where last part of <path> matches file name
+        QFileInfo info(games.item(i).firstChildElement("path").text());
+        if (info.fileName() == searchName) {
+            gameNode = games.item(i);
+            GameEntry game;
+            game.title = gameNode.firstChildElement("name").text();
+            game.platform = platform;
+            gameEntries.append(game);
+            break;
+        }
     }
-  }
 }
 
 void ESGameList::getGameData(GameEntry &game) {
-  if(gameNode.isNull())
-    return;
+    if (gameNode.isNull())
+        return;
 
-  game.releaseDate = gameNode.firstChildElement("releasedate").text();
-  game.publisher = gameNode.firstChildElement("publisher").text();
-  game.developer = gameNode.firstChildElement("developer").text();
-  game.players = gameNode.firstChildElement("players").text();
-  game.rating = gameNode.firstChildElement("rating").text();
-  game.tags = gameNode.firstChildElement("genre").text();
-  game.description = gameNode.firstChildElement("desc").text();
-  game.marqueeData = loadImageData(gameNode.firstChildElement("marquee").text());
-  game.coverData = loadImageData(gameNode.firstChildElement("thumbnail").text());
-  game.screenshotData = loadImageData(gameNode.firstChildElement("image").text());
-  if(config->videos) {
-    loadVideoData(game, gameNode.firstChildElement("video").text());
-  }
+    game.releaseDate = gameNode.firstChildElement("releasedate").text();
+    game.publisher = gameNode.firstChildElement("publisher").text();
+    game.developer = gameNode.firstChildElement("developer").text();
+    game.players = gameNode.firstChildElement("players").text();
+    game.rating = gameNode.firstChildElement("rating").text();
+    game.tags = gameNode.firstChildElement("genre").text();
+    game.description = gameNode.firstChildElement("desc").text();
+    if (config->cacheMarquees) {
+        game.marqueeData =
+            loadBinaryData(gameNode.firstChildElement("marquee").text());
+    }
+    if (config->cacheCovers) {
+        game.coverData =
+            loadBinaryData(gameNode.firstChildElement("thumbnail").text());
+    }
+    if (config->cacheScreenshots) {
+        game.screenshotData =
+            loadBinaryData(gameNode.firstChildElement("image").text());
+    }
+    if (config->manuals) {
+        game.manualData =
+            loadBinaryData(gameNode.firstChildElement("manual").text());
+    }
+    if (config->videos) {
+        loadVideoData(game, gameNode.firstChildElement("video").text());
+    }
 }
 
-QByteArray ESGameList::loadImageData(const QString fileName) {
-  QFile imageFile(getAbsoluteFileName(fileName));
-  if(imageFile.open(QIODevice::ReadOnly)) {
-    QByteArray imageData = imageFile.readAll();
-    imageFile.close();
-    return imageData;
-  }
-  return QByteArray();
+QByteArray ESGameList::loadBinaryData(const QString fileName) {
+    QFile binFile(getAbsoluteFileName(fileName));
+    if (binFile.open(QIODevice::ReadOnly)) {
+        QByteArray data = binFile.readAll();
+        binFile.close();
+        return data;
+    }
+    return QByteArray();
 }
 
 void ESGameList::loadVideoData(GameEntry &game, const QString fileName) {
-  QString absoluteFileName = getAbsoluteFileName(fileName);
-  if(absoluteFileName.isEmpty())
-    return;
-
-  QFile videoFile(absoluteFileName);
-  if(videoFile.open(QIODevice::ReadOnly)) {
-    game.videoData = videoFile.readAll();
-    if(game.videoData.size() > 4096) {
-      game.videoFormat = QFileInfo(absoluteFileName).suffix();
+    game.videoData = loadBinaryData(fileName);
+    if (game.videoData.size() > 4096) {
+        game.videoFormat = QFileInfo(getAbsoluteFileName(fileName)).suffix();
     }
-    videoFile.close();
-  }
 }
 
 QString ESGameList::getAbsoluteFileName(QString fileName) {
-  if(QFileInfo::exists(fileName)) {
-    return QFileInfo(fileName).absoluteFilePath();
-  }
-  fileName.prepend(baseUrl);
-  if(QFileInfo::exists(fileName)) {
-    return QFileInfo(fileName).absoluteFilePath();
-  }
-  return "";
+    if (QFileInfo::exists(fileName)) {
+        return QFileInfo(fileName).absoluteFilePath();
+    }
+    fileName.prepend(baseUrl);
+    if (QFileInfo::exists(fileName)) {
+        return QFileInfo(fileName).absoluteFilePath();
+    }
+    return "";
 }
 
-QList<QString> ESGameList::getSearchNames(const QFileInfo &info) {
-  QList<QString> searchNames;
-  searchNames.append(info.fileName());
-  return searchNames;
+QList<QString> ESGameList::getSearchNames(const QFileInfo &info,
+                                          QString &debug) {
+    QList<QString> searchNames;
+    QString fileName = info.fileName();
+    debug.append("Filename: '" + fileName + "'\n");
+    searchNames.append(fileName);
+    return searchNames;
 }

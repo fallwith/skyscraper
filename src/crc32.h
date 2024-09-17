@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) Alexander Nusov 2015 
+Copyright (c) Alexander Nusov 2015
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,11 @@ SOFTWARE.
 #ifndef CRC32_H
 #define CRC32_H
 
-#include <QtCore>
-#include <QString>
 #include <QMap>
+#include <QString>
+#include <QtCore>
 
-class Crc32
-{
+class Crc32 {
 private:
     quint32 crc_table[256];
     QMap<int, quint32> instances;

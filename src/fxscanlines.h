@@ -26,19 +26,17 @@
 #ifndef FXSCANLINES_H
 #define FXSCANLINES_H
 
-#include <QImage>
-
 #include "layer.h"
 #include "settings.h"
 
-class FxScanlines : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxScanlines : public QObject {
+    Q_OBJECT
 
 public:
-  FxScanlines();
-  QImage applyEffect(const QImage &src, const Layer &layer, Settings *config);
-
+    FxScanlines();
+    QImage applyEffect(const QImage &src, const Layer &layer, Settings *config);
 };
 
 #endif // FXSCANLINES_H

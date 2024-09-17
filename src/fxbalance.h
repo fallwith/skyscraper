@@ -26,21 +26,19 @@
 #ifndef FXBALANCE_H
 #define FXBALANCE_H
 
-#include <QImage>
-
 #include "layer.h"
 
-class FxBalance : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxBalance : public QObject {
+    Q_OBJECT
 
 public:
-  FxBalance();
-  QImage applyEffect(const QImage &src, const Layer &layer);
+    FxBalance();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 
 private:
-  int truncate(int value);
-
+    int truncate(int value);
 };
 
 #endif // FXBALANCE_H

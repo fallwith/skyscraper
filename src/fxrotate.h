@@ -26,18 +26,16 @@
 #ifndef FXROTATE_H
 #define FXROTATE_H
 
-#include <QImage>
-
 #include "layer.h"
 
-class FxRotate : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxRotate : public QObject {
+    Q_OBJECT
 
 public:
-  FxRotate();
-  QImage applyEffect(const QImage &src, const Layer &layer);
-
+    FxRotate();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 };
 
 #endif // FXROTATE_H

@@ -26,18 +26,16 @@
 #ifndef FXOPACITY_H
 #define FXOPACITY_H
 
-#include <QImage>
-
 #include "layer.h"
 
-class FxOpacity : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxOpacity : public QObject {
+    Q_OBJECT
 
 public:
-  FxOpacity();
-  QImage applyEffect(const QImage &src, const Layer &layer);
-
+    FxOpacity();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 };
 
 #endif // FXOPACITY_H

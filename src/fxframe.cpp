@@ -23,36 +23,36 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
-#include <cmath>
-#include <QPainter>
-
 #include "fxframe.h"
 
-FxFrame::FxFrame()
-{
-}
+#include <QPainter>
+#include <cmath>
 
-QImage FxFrame::applyEffect(const QImage &src, const Layer &layer, Settings *config)
-{
-  QImage canvas = src;
+FxFrame::FxFrame() {}
 
-  QImage frame(config->resources[layer.resource]);
-  frame = frame.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+QImage FxFrame::applyEffect(const QImage &src, const Layer &layer,
+                            Settings *config) {
+    QImage canvas = src;
 
-  if(layer.width == -1 && layer.height == -1) {
-    frame = frame.scaled(src.width(), src.height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-  } else if(layer.width == -1 && layer.height != -1) {
-    frame = frame.scaledToHeight(layer.height, Qt::SmoothTransformation);
-  } else if(layer.width != -1 && layer.height == -1) {
-    frame = frame.scaledToWidth(layer.width, Qt::SmoothTransformation);
-  } else if(layer.width != -1 && layer.height != -1) {
-    frame = frame.scaled(layer.width, layer.height, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-  }
+    QImage frame(config->resources[layer.resource]);
+    frame = frame.convertToFormat(QImage::Format_ARGB32_Premultiplied);
 
-  QPainter painter;
-  painter.begin(&canvas);
-  painter.drawImage(layer.x, layer.y, frame);
-  painter.end();
+    if (layer.width == -1 && layer.height == -1) {
+        frame = frame.scaled(src.width(), src.height(), Qt::IgnoreAspectRatio,
+                             Qt::SmoothTransformation);
+    } else if (layer.width == -1 && layer.height != -1) {
+        frame = frame.scaledToHeight(layer.height, Qt::SmoothTransformation);
+    } else if (layer.width != -1 && layer.height == -1) {
+        frame = frame.scaledToWidth(layer.width, Qt::SmoothTransformation);
+    } else if (layer.width != -1 && layer.height != -1) {
+        frame = frame.scaled(layer.width, layer.height, Qt::IgnoreAspectRatio,
+                             Qt::SmoothTransformation);
+    }
 
-  return canvas;
+    QPainter painter;
+    painter.begin(&canvas);
+    painter.drawImage(layer.x, layer.y, frame);
+    painter.end();
+
+    return canvas;
 }

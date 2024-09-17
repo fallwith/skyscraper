@@ -26,21 +26,19 @@
 #ifndef FXBRIGHTNESS_H
 #define FXBRIGHTNESS_H
 
-#include <QImage>
-
 #include "layer.h"
 
-class FxBrightness : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxBrightness : public QObject {
+    Q_OBJECT
 
 public:
-  FxBrightness();
-  QImage applyEffect(const QImage &src, const Layer &layer);
+    FxBrightness();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 
 private:
-  int truncate(int value);
-
+    int truncate(int value);
 };
 
 #endif // FXBRIGHTNESS_H

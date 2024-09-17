@@ -24,334 +24,335 @@
  */
 
 #include "attractmode.h"
-#include "strtools.h"
+
+#include "gameentry.h"
 #include "nametools.h"
+#include "strtools.h"
 
 #include <QDate>
+#include <QStringBuilder>
+#include <QStringList>
 
-AttractMode::AttractMode()
-{
-}
+AttractMode::AttractMode() {}
 
-bool AttractMode::loadOldGameList(const QString &gameListFileString)
-{
-  QFile gameListFile(gameListFileString);
-  if(gameListFile.open(QIODevice::ReadOnly)) {
-    while(!gameListFile.atEnd()) {
-      QList<QByteArray> snippets = gameListFile.readLine().split(';');
-      if(snippets.length() >= 17) {
-	if(snippets.at(0) == "#Name") {
-	  continue;
-	}
-	GameEntry entry;
-	entry.baseName = snippets.at(0);
-	// Do NOT get sqr and par notes here. They are not used by skipExisting
-	entry.title = snippets.at(1);
-	//entry.aMEmulator = snippets.at(2);
-	entry.aMCloneOf = snippets.at(3);
-	entry.releaseDate = snippets.at(4) + "0101";
-	entry.publisher = snippets.at(5);
-	entry.tags = snippets.at(6);
-	entry.players = snippets.at(7);
-	entry.aMRotation = snippets.at(8);
-	entry.aMControl = snippets.at(9);
-	entry.aMStatus = snippets.at(10);
-	entry.aMDisplayCount = snippets.at(11);
-	entry.aMDisplayType = snippets.at(12);
-	entry.aMAltRomName = snippets.at(13);
-	entry.aMAltTitle = snippets.at(14);
-	entry.aMExtra = snippets.at(15);
-	entry.aMButtons = snippets.at(16);
-	oldEntries.append(entry);
-      }
+bool AttractMode::loadOldGameList(const QString &gameListFileString) {
+    QFile gameListFile(gameListFileString);
+    if (gameListFile.open(QIODevice::ReadOnly)) {
+        while (!gameListFile.atEnd()) {
+            QList<QByteArray> snippets = gameListFile.readLine().split(';');
+            if (snippets.length() >= __LAST) {
+                if (snippets.at(0) == "#Name") {
+                    continue;
+                }
+                GameEntry entry;
+                entry.baseName = snippets.at(ROMNAME);
+                // Do NOT get sqr and par notes here. They are not used by
+                // skipExisting
+                entry.title = snippets.at(TITLE);
+                // entry.aMEmulator = snippets.at(2);
+                entry.aMCloneOf = snippets.at(CLONEOF);
+                // full iso date
+                entry.releaseDate = snippets.at(YEAR) % "0101";
+                entry.publisher = snippets.at(MANUFACTURER);
+                entry.tags = snippets.at(CATEGORY);
+                entry.players = snippets.at(PLAYERS);
+                entry.aMRotation = snippets.at(ROTATION);
+                entry.aMControl = snippets.at(CONTROL);
+                entry.aMStatus = snippets.at(STATUS);
+                entry.aMDisplayCount = snippets.at(DISPLAYCOUNT);
+                entry.aMDisplayType = snippets.at(DISPLAYTYPE);
+                entry.aMAltRomName = snippets.at(ALTROMNAME);
+                entry.aMAltTitle = snippets.at(ALTTITLE);
+                entry.aMExtra = snippets.at(EXTRA);
+                entry.aMButtons = snippets.at(BUTTONS);
+                entry.rating = snippets.at(RATING);
+                oldEntries.append(entry);
+            }
+        }
+        gameListFile.close();
+        return true;
     }
-    gameListFile.close();
-    return true;
-  }
 
-  return false;
-}
-
-bool AttractMode::skipExisting(QList<GameEntry> &gameEntries, QSharedPointer<Queue> queue)
-{
-  gameEntries = oldEntries;
-
-  printf("Resolving missing entries...");
-  int dots = 0;
-  for(int a = 0; a < gameEntries.length(); ++a) {
-    dots++;
-    if(dots % 100 == 0) {
-      printf(".");
-      fflush(stdout);
-    }
-    for(int b = 0; b < queue->length(); ++b) {
-      if(gameEntries.at(a).baseName == queue->at(b).completeBaseName()) {
-	queue->removeAt(b);
-	// We assume baseName is unique, so break after getting first hit
-	break;
-      }
-    }
-  }
-  printf(" \033[1;32mDone!\033[0m\n");
-  return true;
-}
-
-void AttractMode::preserveFromOld(GameEntry &entry)
-{
-  for(const auto &oldEntry: oldEntries) {
-    if(oldEntry.baseName == entry.baseName) {
-      if(entry.developer.isEmpty())
-	entry.developer = oldEntry.developer;
-      if(entry.publisher.isEmpty())
-	entry.publisher = oldEntry.publisher;
-      if(entry.players.isEmpty())
-	entry.players = oldEntry.players;
-      if(entry.description.isEmpty())
-	entry.description = oldEntry.description;
-      if(entry.rating.isEmpty())
-	entry.rating = oldEntry.rating;
-      if(entry.releaseDate.isEmpty())
-	entry.releaseDate = oldEntry.releaseDate;
-      if(entry.tags.isEmpty())
-	entry.tags = oldEntry.tags;
-      if(entry.aMCloneOf.isEmpty())
-	entry.aMCloneOf = oldEntry.aMCloneOf;
-      if(entry.aMRotation.isEmpty())
-	entry.aMRotation = oldEntry.aMRotation;
-      if(entry.aMControl.isEmpty())
-	entry.aMControl = oldEntry.aMControl;
-      if(entry.aMStatus.isEmpty())
-	entry.aMStatus = oldEntry.aMStatus;
-      if(entry.aMDisplayCount.isEmpty())
-	entry.aMDisplayCount = oldEntry.aMDisplayCount;
-      if(entry.aMDisplayType.isEmpty())
-	entry.aMDisplayType = oldEntry.aMDisplayType;
-      if(entry.aMAltRomName.isEmpty())
-	entry.aMAltRomName = oldEntry.aMAltRomName;
-      if(entry.aMAltTitle.isEmpty())
-	entry.aMAltTitle = oldEntry.aMAltTitle;
-      if(entry.aMExtra.isEmpty())
-	entry.aMExtra = oldEntry.aMExtra;
-      if(entry.aMButtons.isEmpty())
-	entry.aMButtons = oldEntry.aMButtons;
-      break;
-    }
-  }
-}
-
-void AttractMode::assembleList(QString &finalOutput, QList<GameEntry> &gameEntries)
-{
-  int dots = 0;
-  // Always make dotMod at least 1 or it will give "floating point exception" when modulo
-  int dotMod = gameEntries.length() * 0.1 + 1;
-
-  finalOutput.append("#Name;Title;Emulator;CloneOf;Year;Manufacturer;Category;Players;Rotation;Control;Status;DisplayCount;DisplayType;AltRomname;AltTitle;Extra;Buttons\n");
-  for(auto &entry: gameEntries) {
-    if(dots % dotMod == 0) {
-      printf(".");
-      fflush(stdout);
-    }
-    dots++;
-    // Preserve certain data from old game list entry, but only for empty data
-    preserveFromOld(entry);
-
-    finalOutput.append(entry.baseName + ";" +
-		       entry.title);
-    finalOutput.append(";" +		       
-		       emuInfo.completeBaseName() + ";" +
-		       entry.aMCloneOf + ";" +
-		       QDate::fromString(entry.releaseDate, "yyyyMMdd").toString("yyyy") + ";" +
-		       entry.publisher + ";" +
-		       entry.tags + ";" +
-		       entry.players + ";" +
-		       entry.aMRotation + ";" +
-		       entry.aMControl + ";" +
-		       entry.aMStatus + ";" +
-		       entry.aMDisplayCount + ";" +
-		       entry.aMDisplayType + ";" +
-		       entry.aMAltRomName + ";" +
-		       entry.aMAltTitle + ";" +
-		       entry.aMExtra + ";" +
-		       entry.aMButtons + ";\n");
-    if(!entry.description.isEmpty() && saveDescFile) {
-      QFile descFile(descDir.absolutePath() + "/" + entry.baseName + ".txt");
-      if(descFile.open(QIODevice::WriteOnly)) {
-	descFile.write(entry.description.trimmed().toUtf8().left(config->maxLength));
-	descFile.close();
-      }
-    }
-  }
-}
-
-void AttractMode::checkReqs()
-{
-  if(config->frontendExtra.isEmpty()) {
-    printf("Frontend 'attractmode' requires emulator set with '-e'. Check '--help' for more information.\n");
-    exit(0);
-  }
-  if(!config->frontendExtra.contains(".cfg")) {
-    config->frontendExtra.append(".cfg");
-  }
-
-
-  emuInfo.setFile(config->frontendExtra);
-  descDir.setPath(QDir::homePath() + "/.attract/scraper/" +
-		  emuInfo.completeBaseName() + "/overview");
-  if(descDir.exists()) {
-    saveDescFile = true;
-  } else {
-    if(descDir.mkpath(descDir.absolutePath())) {
-      saveDescFile = true;
-    }
-  }
-
-  printf("Looking for emulator cfg file:\n");
-
-  if(checkEmulatorFile(config->frontendExtra)) {
-    return;
-  }
-
-  // For RetroPie this is linked directly to /opt/retropie/configs/all/attractmode/emulators/
-  if(checkEmulatorFile(QDir::homePath() + "/.attract/emulators/" + config->frontendExtra)) {
-    return;
-  }
-
-  printf("Couldn't locate emulator cfg file, exiting...\n");
-  exit(1);
-}
-
-bool AttractMode::checkEmulatorFile(QString fileName)
-{
-  QFileInfo info(fileName);
-  printf("Trying '%s'... ", info.absoluteFilePath().toStdString().c_str());
-
-  if(info.exists() && info.isFile()) {
-    config->frontendExtra = info.absoluteFilePath();
-    printf("\033[1;32mFound!\033[0m\n\n");
-    return true;
-  } else {
-    printf("Not found!\n");
     return false;
-  }
 }
 
-bool AttractMode::canSkip()
-{
-  return true;
-}
+bool AttractMode::skipExisting(QList<GameEntry> &gameEntries,
+                               QSharedPointer<Queue> queue) {
+    gameEntries = oldEntries;
 
-QString AttractMode::getGameListFileName()
-{
-  QFileInfo info(config->frontendExtra);
-  return QString(info.completeBaseName() + ".txt");
-}
-
-QString AttractMode::getInputFolder()
-{
-  return QString(QDir::homePath() + "/RetroPie/roms/" + config->platform);
-}
-
-QString AttractMode::getGameListFolder()
-{
-  // For RetroPie this is linked directly to /opt/retropie/configs/all/attractmode/romlists/
-  if(QFileInfo::exists(QDir::homePath() + "/.attract/romlists")) {
-    return QString(QDir::homePath() + "/.attract/romlists");
-  }
-
-  return config->inputFolder;
-}
-
-QString AttractMode::getCoversFolder()
-{
-  QString type = "flyer";
-  QString mediaTypeFolder = getMediaTypeFolder(type);
-  if(mediaTypeFolder.isEmpty()) {
-    mediaTypeFolder = config->mediaFolder + (config->mediaFolder.right(1) == "/"?"":"/") + type;
-  }
-  return mediaTypeFolder;
-}
-
-QString AttractMode::getScreenshotsFolder()
-{
-  QString type = "snap";
-  QString mediaTypeFolder = getMediaTypeFolder(type);
-  if(mediaTypeFolder.isEmpty()) {
-    mediaTypeFolder = config->mediaFolder + (config->mediaFolder.right(1) == "/"?"":"/") + type;
-  }
-  return mediaTypeFolder;
-}
-
-QString AttractMode::getWheelsFolder()
-{
-  QString type = "wheel";
-  QString mediaTypeFolder = getMediaTypeFolder(type);
-  if(mediaTypeFolder.isEmpty()) {
-    mediaTypeFolder = config->mediaFolder + (config->mediaFolder.right(1) == "/"?"":"/") + type;
-  }
-  return mediaTypeFolder;
-}
-
-QString AttractMode::getMarqueesFolder()
-{
-  QString type = "marquee";
-  QString mediaTypeFolder = getMediaTypeFolder(type);
-  if(mediaTypeFolder.isEmpty()) {
-    mediaTypeFolder = config->mediaFolder + (config->mediaFolder.right(1) == "/"?"":"/") + type;
-  }
-  return mediaTypeFolder;
-}
-
-QString AttractMode::getVideosFolder()
-{
-  QString type = "video";
-  QString mediaTypeFolder = getMediaTypeFolder(type);
-  if(mediaTypeFolder.isEmpty()) {
-    mediaTypeFolder = getMediaTypeFolder("snap", true);
-  }
-  if(mediaTypeFolder.isEmpty()) {
-    mediaTypeFolder = config->mediaFolder + (config->mediaFolder.right(1) == "/"?"":"/") + type;
-  }
-  return mediaTypeFolder;
-}
-
-QString AttractMode::getMediaTypeFolder(QString type, bool detectVideoPath)
-{
-  QString mediaTypeFolder = "";
-  QFile emulatorFile(config->frontendExtra);
-
-  if(emulatorFile.exists() && emulatorFile.open(QIODevice::ReadOnly)) {
-    while(!emulatorFile.atEnd()) {
-      QByteArray line = emulatorFile.readLine();
-      line = line.trimmed();
-      line.replace("~", QDir::homePath().toUtf8());
-      line.replace("$HOME", QDir::homePath().toUtf8());
-      QString lookFor = "artwork";
-      if(line.left(lookFor.length()) == lookFor) {
-	line = line.remove(0, lookFor.length()).trimmed();
-	if(line.left(type.length()) == type) {
-	  line = line.remove(0, type.length()).trimmed();
-	  QList<QByteArray> paths = line.split(';');
-	  // This is some weird case where the 'snap' artwork line can contain multiple paths
-	  // and one of those paths is actually the video path. It was reported in an issue
-	  // and this is seemlingly how it should work for those cases where the user does not
-	  // use an 'artwork video' line.
-	  if(detectVideoPath) {
-	    for(const auto &path: paths) {
-	      if(path.contains("video")) {
-		mediaTypeFolder = path;
-		break;
-	      }
-	    }
-	  } else {
-	    mediaTypeFolder = paths.first();
-	  }
-	}
-      }
+    printf("Resolving missing entries...");
+    int dots = 0;
+    for (int a = 0; a < gameEntries.length(); ++a) {
+        dots++;
+        if (dots % 100 == 0) {
+            printf(".");
+            fflush(stdout);
+        }
+        for (int b = 0; b < queue->length(); ++b) {
+            if (gameEntries.at(a).baseName == queue->at(b).completeBaseName()) {
+                queue->removeAt(b);
+                // We assume baseName is unique, so break after getting first
+                // hit
+                break;
+            }
+        }
     }
-    emulatorFile.close();
-  }
+    printf(" \033[1;32mDone!\033[0m\n");
+    return true;
+}
 
-  return mediaTypeFolder;
+void AttractMode::preserveFromOld(GameEntry &entry) {
+    for (const auto &oldEntry : oldEntries) {
+        if (oldEntry.baseName == entry.baseName) {
+            if (entry.developer.isEmpty())
+                entry.developer = oldEntry.developer;
+            if (entry.publisher.isEmpty())
+                entry.publisher = oldEntry.publisher;
+            if (entry.players.isEmpty())
+                entry.players = oldEntry.players;
+            if (entry.description.isEmpty())
+                entry.description = oldEntry.description;
+            if (entry.rating.isEmpty())
+                entry.rating = oldEntry.rating;
+            if (entry.releaseDate.isEmpty())
+                entry.releaseDate = oldEntry.releaseDate;
+            if (entry.tags.isEmpty())
+                entry.tags = oldEntry.tags;
+            if (entry.aMCloneOf.isEmpty())
+                entry.aMCloneOf = oldEntry.aMCloneOf;
+            if (entry.aMRotation.isEmpty())
+                entry.aMRotation = oldEntry.aMRotation;
+            if (entry.aMControl.isEmpty())
+                entry.aMControl = oldEntry.aMControl;
+            if (entry.aMStatus.isEmpty())
+                entry.aMStatus = oldEntry.aMStatus;
+            if (entry.aMDisplayCount.isEmpty())
+                entry.aMDisplayCount = oldEntry.aMDisplayCount;
+            if (entry.aMDisplayType.isEmpty())
+                entry.aMDisplayType = oldEntry.aMDisplayType;
+            if (entry.aMAltRomName.isEmpty())
+                entry.aMAltRomName = oldEntry.aMAltRomName;
+            if (entry.aMAltTitle.isEmpty())
+                entry.aMAltTitle = oldEntry.aMAltTitle;
+            if (entry.aMExtra.isEmpty())
+                entry.aMExtra = oldEntry.aMExtra;
+            if (entry.aMButtons.isEmpty())
+                entry.aMButtons = oldEntry.aMButtons;
+            break;
+        }
+    }
+}
+
+void AttractMode::assembleList(QString &finalOutput,
+                               QList<GameEntry> &gameEntries) {
+    QStringList cols = {
+        "#Name",        "Title",        "Emulator",    "CloneOf",    "Year",
+        "Manufacturer", "Category",     "Players",     "Rotation",   "Control",
+        "Status",       "DisplayCount", "DisplayType", "AltRomname", "AltTitle",
+        "Extra",        "Buttons",      "Series",      "Language",   "Region",
+        "Rating"};
+
+    QStringList l;
+    l.append(cols.join(";"));
+
+    int dots = -1;
+    int dotMod = 1 + gameEntries.length() * 0.1;
+
+    for (auto &entry : gameEntries) {
+        if (++dots % dotMod == 0) {
+            printf(".");
+            fflush(stdout);
+        }
+
+        preserveFromOld(entry);
+
+        QStringList row;
+        row.append(entry.baseName);
+        row.append(entry.title);
+        row.append(emuInfo.completeBaseName());
+        row.append(entry.aMCloneOf);
+        row.append(
+            QDate::fromString(entry.releaseDate, "yyyyMMdd").toString("yyyy"));
+        row.append(entry.publisher);
+        row.append(entry.tags);
+        row.append(entry.players);
+        row.append(entry.aMRotation);
+        row.append(entry.aMControl);
+        row.append(entry.aMStatus);
+        row.append(entry.aMDisplayCount);
+        row.append(entry.aMDisplayType);
+        row.append(entry.aMAltRomName);
+        row.append(entry.aMAltTitle);
+        row.append(entry.aMExtra);
+        row.append(entry.aMButtons);
+        row.append(""); // Series
+        row.append(""); // Language
+        row.append(""); // Region
+        row.append(entry.rating);
+        l.append(row.join(";"));
+
+        if (!entry.description.isEmpty() && saveDescFile) {
+            QFile descFile(descDir.absolutePath() % "/" % entry.baseName %
+                           ".txt");
+            if (descFile.open(QIODevice::WriteOnly)) {
+                descFile.write(entry.description.trimmed().toUtf8().left(
+                    config->maxLength));
+                descFile.close();
+            }
+        }
+    }
+    finalOutput = l.join("\n") % "\n";
+}
+
+void AttractMode::checkReqs() {
+    if (config->frontendExtra.isEmpty()) {
+        printf("Frontend 'attractmode' requires emulator set with '-e'. Check "
+               "'--help' for more information.\n");
+        exit(0);
+    }
+    if (!config->frontendExtra.contains(".cfg")) {
+        config->frontendExtra.append(".cfg");
+    }
+
+    emuInfo.setFile(config->frontendExtra);
+    descDir.setPath(QDir::homePath() % "/.attract/scraper/" +
+                    emuInfo.completeBaseName() % "/overview");
+    if (descDir.exists()) {
+        saveDescFile = true;
+    } else {
+        if (descDir.mkpath(descDir.absolutePath())) {
+            saveDescFile = true;
+        }
+    }
+
+    printf("Looking for emulator cfg file:\n");
+
+    if (checkEmulatorFile(config->frontendExtra)) {
+        return;
+    }
+
+    // For RetroPie this is linked directly to
+    // /opt/retropie/configs/all/attractmode/emulators/
+    if (checkEmulatorFile(QDir::homePath() % "/.attract/emulators/" +
+                          config->frontendExtra)) {
+        return;
+    }
+
+    printf("Couldn't locate emulator cfg file, exiting...\n");
+    exit(1);
+}
+
+bool AttractMode::checkEmulatorFile(QString fileName) {
+    QFileInfo info(fileName);
+    printf("Trying '%s'... ", info.absoluteFilePath().toStdString().c_str());
+
+    if (info.exists() && info.isFile()) {
+        config->frontendExtra = info.absoluteFilePath();
+        printf("\033[1;32mFound!\033[0m\n\n");
+        return true;
+    } else {
+        printf("Not found!\n");
+        return false;
+    }
+}
+
+bool AttractMode::canSkip() { return true; }
+
+QString AttractMode::getGameListFileName() {
+    QFileInfo info(config->frontendExtra);
+    return QString(info.completeBaseName() % ".txt");
+}
+
+QString AttractMode::getInputFolder() {
+    return QString(QDir::homePath() % "/RetroPie/roms/" % config->platform);
+}
+
+QString AttractMode::getGameListFolder() {
+    // For RetroPie this is linked directly to
+    // /opt/retropie/configs/all/attractmode/romlists/
+    if (QFileInfo::exists(QDir::homePath() % "/.attract/romlists")) {
+        return QString(QDir::homePath() % "/.attract/romlists");
+    }
+    return config->inputFolder;
+}
+
+QString AttractMode::getCoversFolder() { return getMediaTypeFolder("flyer"); }
+
+QString AttractMode::getScreenshotsFolder() {
+    return getMediaTypeFolder("snap");
+}
+
+QString AttractMode::getWheelsFolder() { return getMediaTypeFolder("wheel"); }
+
+QString AttractMode::getMarqueesFolder() {
+    return getMediaTypeFolder("marquee");
+}
+
+QString AttractMode::getTexturesFolder() {
+    return getMediaTypeFolder("texture");
+}
+
+QString AttractMode::getVideosFolder() {
+    QString type = "video";
+    QString mediaTypeFolder = getMediaTypeFolder(type);
+    if (mediaTypeFolder.isEmpty()) {
+        mediaTypeFolder = getMediaTypeFolder("snap", true);
+    }
+    if (mediaTypeFolder.isEmpty()) {
+        mediaTypeFolder = concatPath(config->mediaFolder, type);
+    }
+    return mediaTypeFolder;
+}
+
+QString AttractMode::getMediaTypeFolder(QString type, bool detectVideoPath) {
+    QString mediaTypeFolder = "";
+    QFile emulatorFile(config->frontendExtra);
+
+    if (emulatorFile.exists() && emulatorFile.open(QIODevice::ReadOnly)) {
+        while (!emulatorFile.atEnd()) {
+            QByteArray line = emulatorFile.readLine();
+            line = line.trimmed();
+            line.replace("~", QDir::homePath().toUtf8());
+            line.replace("$HOME", QDir::homePath().toUtf8());
+            QString lookFor = "artwork";
+            if (line.left(lookFor.length()) == lookFor) {
+                line = line.remove(0, lookFor.length()).trimmed();
+                if (line.left(type.length()) == type) {
+                    line = line.remove(0, type.length()).trimmed();
+                    QList<QByteArray> paths = line.split(';');
+                    // This is some weird case where the 'snap' artwork line can
+                    // contain multiple paths and one of those paths is actually
+                    // the video path. It was reported in an issue and this is
+                    // seemlingly how it should work for those cases where the
+                    // user does not use an 'artwork video' line.
+                    if (detectVideoPath) {
+                        for (const auto &path : paths) {
+                            if (path.contains("video")) {
+                                mediaTypeFolder = path;
+                                break;
+                            }
+                        }
+                    } else {
+                        mediaTypeFolder = paths.first();
+                    }
+                }
+            }
+        }
+        emulatorFile.close();
+    }
+
+    if (type != "video" && mediaTypeFolder.isEmpty()) {
+        mediaTypeFolder = concatPath(config->mediaFolder, type);
+    }
+
+    return mediaTypeFolder;
+}
+
+QString AttractMode::concatPath(QString absPath, QString sub) {
+    if (absPath.right(1) != "/") {
+        return absPath % "/" % sub;
+    }
+    return absPath % sub;
 }
 
 /*
@@ -363,7 +364,8 @@ executable /opt/retropie/supplementary/runcommand/runcommand.sh
 args 0 _SYS_ snes "[romfilename]"
 rompath /home/pi/RetroPie/roms/snes
 system Super Nintendo
-romext .7z;.bin;.bs;.smc;.sfc;.fig;.swc;.mgd;.zip;.7Z;.BIN;.BS;.SMC;.SFC;.FIG;.SWC;.MGD;.ZIP
+romext
+.7z;.bin;.bs;.smc;.sfc;.fig;.swc;.mgd;.zip;.7Z;.BIN;.BS;.SMC;.SFC;.FIG;.SWC;.MGD;.ZIP
 artwork flyer /home/pi/RetroPie/roms/snes/flyer
 artwork marquee /home/pi/RetroPie/roms/snes/marquee
 artwork snap /home/pi/RetroPie/roms/snes/snap
@@ -376,7 +378,7 @@ artwork wheel /home/pi/RetroPie/roms/snes/wheel
 executable           /opt/retropie/supplementary/runcommand/runcommand.sh
 args                 0 _SYS_ amiga "[romfilename]"
 rompath              /home/pi/RetroPie/roms/amiga
-romext               .adf;.adz;.dms;.ipf;.uae;.zip;.sh;.ADF;.ADZ;.DMS;.IPF;.UAE;.ZIP;.SH
+romext .adf;.adz;.dms;.ipf;.uae;.zip;.sh;.ADF;.ADZ;.DMS;.IPF;.UAE;.ZIP;.SH
 system               Commodore Amiga
 info_source          thegamesdb.net
 artwork    boxart          /home/pi/RetroPie/roms/amiga/boxart
@@ -387,7 +389,10 @@ artwork    wheel           /home/pi/RetroPie/roms/amiga/wheel
 
 ---- Example romlist entry begin ----
 #Name;Title;Emulator;CloneOf;Year;Manufacturer;Category;Players;Rotation;Control;Status;DisplayCount;DisplayType;AltRomname;AltTitle;Extra;Buttons
-Bubble Bobble;Bubble Bobble;Commodore Amiga;;1987;Firebird / Taito;arcade, cartoonish, cooperative, cute, jumponthings, platform, powerup, single;1 - 2 (2 simultaneous);0;;;;;;;;;
-Games - Winter Edition;The Games: Winter Edition;Commodore Amiga;;1989;U.S. Gold / Epyx;multievent, olympics, sports;1 - 8 (1 simultaneous);0;;;;;;;;;
+Bubble Bobble;Bubble Bobble;Commodore Amiga;;1987;Firebird / Taito;arcade,
+cartoonish, cooperative, cute, jumponthings, platform, powerup, single;1 - 2 (2
+simultaneous);0;;;;;;;;; Games - Winter Edition;The Games: Winter
+Edition;Commodore Amiga;;1989;U.S. Gold / Epyx;multievent, olympics, sports;1 -
+8 (1 simultaneous);0;;;;;;;;;
 ---- End ----
 */

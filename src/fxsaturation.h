@@ -26,21 +26,19 @@
 #ifndef FXSATURATION_H
 #define FXSATURATION_H
 
-#include <QImage>
-
 #include "layer.h"
 
-class FxSaturation : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxSaturation : public QObject {
+    Q_OBJECT
 
 public:
-  FxSaturation();
-  QImage applyEffect(const QImage &src, const Layer &layer);
+    FxSaturation();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 
 private:
-  int truncate(int value);
-
+    int truncate(int value);
 };
 
 #endif // FXSATURATION_H

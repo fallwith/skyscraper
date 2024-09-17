@@ -28,22 +28,23 @@
 
 #include "abstractscraper.h"
 
-class OpenRetro : public AbstractScraper
-{
-  Q_OBJECT
+class OpenRetro : public AbstractScraper {
+    Q_OBJECT
 
 public:
-  OpenRetro(Settings *config, QSharedPointer<NetManager> manager);
+    OpenRetro(Settings *config, QSharedPointer<NetManager> manager);
 
 private:
-  QList<QString> getSearchNames(const QFileInfo &info) override;
-  void getSearchResults(QList<GameEntry> &gameEntries, QString searchName,
-			QString platform) override;
-  void getGameData(GameEntry &game) override;
-  void getDescription(GameEntry &game) override;
-  void getTags(GameEntry &game) override;
-  void getCover(GameEntry &game) override;
-  void getMarquee(GameEntry &game) override;
+    QList<QString> getSearchNames(const QFileInfo &info,
+                                  QString &debug) override;
+    void getSearchResults(QList<GameEntry> &gameEntries, QString searchName,
+                          QString platform) override;
+    void getGameData(GameEntry &game) override;
+    void getDescription(GameEntry &game) override;
+    void getTags(GameEntry &game) override;
+    void getRating(GameEntry &game) override;
+    void getCover(GameEntry &game) override;
+    void getMarquee(GameEntry &game) override;
 };
 
 #endif // OPENRETRO_H

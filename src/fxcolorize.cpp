@@ -23,43 +23,39 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
-#include <cmath>
-#include <QPainter>
-
 #include "fxcolorize.h"
 
-FxColorize::FxColorize()
-{
-}
+#include <QPainter>
+#include <cmath>
 
-QImage FxColorize::applyEffect(const QImage &src, const Layer &layer)
-{
-  QImage canvas = src;
+FxColorize::FxColorize() {}
 
-  int hue = layer.value;
-  int satDelta = layer.delta;
+QImage FxColorize::applyEffect(const QImage &src, const Layer &layer) {
+    QImage canvas = src;
 
-  if(hue > 359 || hue < 0) {
-    return canvas;
-  }
+    int hue = layer.value;
+    int satDelta = layer.delta;
 
-  if(satDelta > 127 || satDelta < -127) {
-    satDelta = 0;
-  }
-  int saturation = 127 + satDelta;
-
-  for(int y = 0; y < canvas.height(); ++y) {
-    QRgb* line = (QRgb *)canvas.scanLine(y);
-    for(int x = 0; x < canvas.width(); ++x) {
-        QColor color(line[x]);
-	color.setHsl(hue, saturation,
-		     qRed(line[x]) * 0.2126 +
-		     qGreen(line[x]) * 0.7152 +
-		     qRed(line[x]) * 0.0722,
-		     qAlpha(line[x]));
-	line[x] = qPremultiply(color.rgba());
+    if (hue > 359 || hue < 0) {
+        return canvas;
     }
-  }
 
-  return canvas;
+    if (satDelta > 127 || satDelta < -127) {
+        satDelta = 0;
+    }
+    int saturation = 127 + satDelta;
+
+    for (int y = 0; y < canvas.height(); ++y) {
+        QRgb *line = (QRgb *)canvas.scanLine(y);
+        for (int x = 0; x < canvas.width(); ++x) {
+            QColor color(line[x]);
+            color.setHsl(hue, saturation,
+                         qRed(line[x]) * 0.2126 + qGreen(line[x]) * 0.7152 +
+                             qRed(line[x]) * 0.0722,
+                         qAlpha(line[x]));
+            line[x] = qPremultiply(color.rgba());
+        }
+    }
+
+    return canvas;
 }

@@ -26,18 +26,16 @@
 #ifndef FXHUE_H
 #define FXHUE_H
 
-#include <QImage>
-
 #include "layer.h"
 
-class FxHue : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxHue : public QObject {
+    Q_OBJECT
 
 public:
-  FxHue();
-  QImage applyEffect(const QImage &src, const Layer &layer);
-
+    FxHue();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 };
 
 #endif // FXHUE_H

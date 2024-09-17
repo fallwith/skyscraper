@@ -26,28 +26,27 @@
 #ifndef COMPOSITOR_H
 #define COMPOSITOR_H
 
+#include "gameentry.h"
+#include "layer.h"
+#include "settings.h"
+
 #include <QImage>
 #include <QXmlStreamReader>
 
-#include "settings.h"
-#include "gameentry.h"
-#include "layer.h"
-
-class Compositor : public QObject
-{
-  Q_OBJECT
+class Compositor : public QObject {
+    Q_OBJECT
 
 public:
-  Compositor(Settings *config);
-  bool processXml();
-  void saveAll(GameEntry &game, QString completeBaseName);
+    Compositor(Settings *config);
+    bool processXml();
+    void saveAll(GameEntry &game, QString completeBaseName);
+    QString getSubpath(const QString &absPath);
 
 private:
-  void addChildLayers(Layer &layer, QXmlStreamReader &xml);
-  void processChildLayers(GameEntry &game, Layer &layer);
-  Settings *config;
-  Layer outputs;
-
+    void addChildLayers(Layer &layer, QXmlStreamReader &xml);
+    void processChildLayers(GameEntry &game, Layer &layer);
+    Settings *config;
+    Layer outputs;
 };
 
 #endif // COMPOSITOR_H

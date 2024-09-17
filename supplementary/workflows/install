@@ -1,0 +1,53 @@
+#!/bin/bash
+set -euo pipefail
+set -x
+
+export SKYSCRAPER_HOME="$(cd "$(dirname "$0")/../.." && pwd)"
+source "${SKYSCRAPER_HOME}/supplementary/workflows/core.sh"
+
+cleanup() {
+   mv VERSION.bk VERSION &>/dev/null || true
+}
+
+cleanup
+
+run_termux_docker() {
+   local -r arch="$1"
+
+   "./termux-packages/scripts/run-docker.sh" ./build-package.sh -a "$arch" -I "$PKG_NAME"
+
+   rm -rf target || true
+   mkdir -p target || true
+   docker cp "termux-package-builder:/data/data/com.termux/files/usr/bin/${PKG_BIN_NAME}" "target"
+}
+
+build() {
+   source "VERSION"
+   LATEST="$VERSION"
+
+   if [[ "$OSTYPE" == *"arwin"* ]]; then
+      mv VERSION VERSION.bk || true
+   fi
+
+   cd "$SKYSCRAPER_HOME"
+   echo "--- Cleaning out old build if one exists ---"
+   make --ignore-errors clean || true
+   rm --force .qmake.stash || true
+   qmake
+   echo "--- Building Skyscraper v.$LATEST ---"
+   make "-j$(nproc)"
+   echo "--- Installing Skyscraper v.$LATEST ---"
+   sudo make install
+   echo "--- Skyscraper has been updated to v.$LATEST ---"
+}
+
+main() {
+   case "${1:-}" in
+      "android-aarch64") run_termux_docker "aarch64" ;;
+      "android-arm") run_termux_docker "arm" ;;
+      *) build ;;
+   esac
+}
+
+trap cleanup EXIT
+main "$@"

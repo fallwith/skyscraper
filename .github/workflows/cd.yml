@@ -1,0 +1,68 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  Binary:
+    # skip CD
+    if: false
+    name: Publish ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # This should work with only the `include`s but it currently doesn't because of this bug:
+        # https://github.community/t5/How-to-use-Git-and-GitHub/GitHub-Actions-Matrix-options-dont-work-as-documented/td-p/29558
+        target: 
+          - windows-x86_64
+          - osx-x86_64
+          - linux-x86_64
+          - android-aarch64
+          - android-arm
+        include:
+          - os: windows-latest
+            target: windows-x86_64
+          - os: macos-latest
+            target: osx-x86_64
+          - os: ubuntu-latest
+            target: linux-x86_64
+          - os: ubuntu-latest
+            target: android-aarch64
+          - os: ubuntu-latest
+            target: android-arm
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v3
+#    - name: Install Qt
+#      if: startsWith(matrix.os, 'windows')
+#      uses: jurplel/install-qt-action@master
+#      with:
+#        host: 'windows'
+#        target: 'desktop'
+#        arch: 'win64_msvc2019_64'
+#        install-deps: 'true'
+#        modules: 'qtwebengine'
+#        archives: 'qtbase'
+#        cache: 'false'
+#        tools: 'tools_ifw tools_qtcreator,qt.tools.qtcreator'
+    - name: Install deps
+      run: bash ./supplementary/workflows/deps "${{ matrix.target }}"
+    - name: Build
+      run: bash ./supplementary/workflows/install "${{ matrix.target }}"
+    - name: Test
+      run: bash ./supplementary/workflows/test "${{ matrix.target }}" 
+    - name: Zip
+      run: bash ./supplementary/workflows/zip
+    - name: Version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+    - name: Upload
+      uses: svenstaro/upload-release-action@master
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ./target/skyscraper.tar.gz
+        tag: ${{ github.ref }}
+        asset_name: skyscraper-${{ steps.get_version.outputs.VERSION }}-${{ matrix.target }}.tar.gz

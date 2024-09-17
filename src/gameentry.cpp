@@ -25,75 +25,75 @@
 
 #include "gameentry.h"
 
-GameEntry::GameEntry()
-{
+GameEntry::GameEntry() {}
+
+void GameEntry::calculateCompleteness(bool videoEnabled, bool manualEnabled) {
+    completeness = 100.0;
+    int noOfTypes = 13;
+    if (videoEnabled) {
+        noOfTypes += 1;
+    }
+    if (manualEnabled) {
+        noOfTypes += 1;
+    }
+    double valuePerType = completeness / (double)noOfTypes;
+    if (title.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (platform.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (coverData.isNull()) {
+        completeness -= valuePerType;
+    }
+    if (screenshotData.isNull()) {
+        completeness -= valuePerType;
+    }
+    if (wheelData.isNull()) {
+        completeness -= valuePerType;
+    }
+    if (marqueeData.isNull()) {
+        completeness -= valuePerType;
+    }
+    if (description.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (releaseDate.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (developer.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (publisher.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (tags.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (rating.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (players.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (ages.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (videoEnabled && videoFormat.isEmpty()) {
+        completeness -= valuePerType;
+    }
+    if (manualEnabled && manualData.isEmpty()) {
+        completeness -= valuePerType;
+    }
 }
 
-void GameEntry::calculateCompleteness(bool videoEnabled)
-{
-  completeness = 100.0;
-  int noOfTypes = 13;
-  if(videoEnabled) {
-    noOfTypes += 1;
-  }
-  double valuePerType = completeness / (double)noOfTypes;
-  if(title.isEmpty()) {
-    completeness -= valuePerType;
-  }
-  if(platform.isEmpty()) {
-    completeness -= valuePerType;
-  }
-  if(coverData.isNull()) {
-    completeness -= valuePerType;
-  }
-  if(screenshotData.isNull()) {
-    completeness -= valuePerType;
-  }
-  if(wheelData.isNull()) {
-    completeness -= valuePerType;
-  }
-  if(marqueeData.isNull()) {
-    completeness -= valuePerType;
-  }
-  if(description.isEmpty()) {
-    completeness -= valuePerType;
-  }
-  if(releaseDate.isEmpty()) {
-    completeness -= valuePerType;
-  }
-  if(developer.isEmpty()) {
-    completeness -= valuePerType;
-  }
-  if(publisher.isEmpty()) {
-    completeness -= valuePerType;
-  }
-  if(tags.isEmpty()) {
-    completeness -= valuePerType;
-  }
-  if(rating.isEmpty()) {
-    completeness -= valuePerType;
-  }
-  if(players.isEmpty()) {
-    completeness -= valuePerType;
-  }
-  if(ages.isEmpty()) {
-    completeness -= valuePerType;
-  }
-  if(videoEnabled && videoFormat.isEmpty()) {
-    completeness -= valuePerType;
-  }
-}
+int GameEntry::getCompleteness() const { return (int)completeness; }
 
-int GameEntry::getCompleteness() const
-{
-  return (int)completeness;
-}
-
-void GameEntry::resetMedia()
-{
-  coverData = QByteArray();
-  screenshotData = QByteArray();
-  wheelData = QByteArray();
-  marqueeData = QByteArray();
-  videoData = "";
+void GameEntry::resetMedia() {
+    coverData = QByteArray();
+    screenshotData = QByteArray();
+    wheelData = QByteArray();
+    marqueeData = QByteArray();
+    videoData = QByteArray();
+    manualData = QByteArray();
 }

@@ -30,35 +30,48 @@
 
 #include <QDir>
 
-class AttractMode : public AbstractFrontend
-{
-  Q_OBJECT
+class AttractMode : public AbstractFrontend {
+    Q_OBJECT
 
 public:
-  AttractMode();
-  void checkReqs() override;
-  bool skipExisting(QList<GameEntry> &gameEntries, QSharedPointer<Queue> queue) override;
-  void assembleList(QString &finalOutput, QList<GameEntry> &gameEntries) override;
-  bool canSkip() override;
-  bool loadOldGameList(const QString &gameListFileString) override;
-  void preserveFromOld(GameEntry &entry) override;
-  QString getGameListFileName() override;
-  QString getInputFolder() override;
-  QString getGameListFolder() override;
-  QString getCoversFolder() override;
-  QString getScreenshotsFolder() override;
-  QString getWheelsFolder() override;
-  QString getMarqueesFolder() override;
-  QString getVideosFolder() override;
+    AttractMode();
+
+    void checkReqs() override;
+    bool skipExisting(QList<GameEntry> &gameEntries,
+                      QSharedPointer<Queue> queue) override;
+    void assembleList(QString &finalOutput,
+                      QList<GameEntry> &gameEntries) override;
+    bool canSkip() override;
+    bool loadOldGameList(const QString &gameListFileString) override;
+    void preserveFromOld(GameEntry &entry) override;
+    QString getGameListFileName() override;
+    QString getInputFolder() override;
+    QString getGameListFolder() override;
+    QString getCoversFolder() override;
+    QString getScreenshotsFolder() override;
+    QString getWheelsFolder() override;
+    QString getMarqueesFolder() override;
+    QString getTexturesFolder() override;
+    QString getVideosFolder() override;
 
 private:
-  bool saveDescFile = false;
-  QFileInfo emuInfo;
-  QDir descDir;
+    enum Cols {
+        // clang-format off
+        ROMNAME = 0,  TITLE,        EMULATOR,    CLONEOF,    YEAR,
+        MANUFACTURER, CATEGORY,     PLAYERS,     ROTATION,   CONTROL,
+        STATUS,       DISPLAYCOUNT, DISPLAYTYPE, ALTROMNAME, ALTTITLE,
+        EXTRA,        BUTTONS,      SERIES,      LANGUAGE,   REGION,
+        RATING,       __LAST
+        // clang-format on
+    };
 
-  QString getMediaTypeFolder(QString type, bool detectVideoPath = false);
-  bool checkEmulatorFile(QString fileName);
+    bool saveDescFile = false;
+    QFileInfo emuInfo;
+    QDir descDir;
 
+    QString getMediaTypeFolder(QString type, bool detectVideoPath = false);
+    bool checkEmulatorFile(QString fileName);
+    QString concatPath(QString absPath, QString sub);
 };
 
 #endif // ATTRACTMODE_H

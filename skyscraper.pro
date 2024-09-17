@@ -3,36 +3,79 @@ TARGET = Skyscraper
 DEPENDPATH += .
 INCLUDEPATH += .
 CONFIG += release
-win32:CONFIG += console
+# set std-C++17 for clang and gcc
+CONFIG += c++1z
 QT += core network xml
-QMAKE_CXXFLAGS += -std=c++11
 
-unix:target.path=/usr/local/bin
+# Installation prefix path for bin/Skyscraper and etc/skyscraper/*
+PREFIX=$$(PREFIX)
+# One time set with "PREFIX=/path/to qmake"?
+isEmpty(PREFIX) {
+  # No. Try qmake persistent property $$[PREFIX].
+  PREFIX = $$[PREFIX]
+}
+# Check if persistent property has been set with "qmake -set PREFIX /path/to"?
+isEmpty(PREFIX) {
+  # No. Use default.
+  PREFIX = /usr/local
+}
+
+unix:target.path=$${PREFIX}/bin
 unix:target.files=Skyscraper Skyscraper.app/Contents/MacOS/Skyscraper
 
-unix:examples.path=/usr/local/etc/skyscraper
-unix:examples.files=config.ini.example README.md hints.xml artwork.xml artwork.xml.example1 artwork.xml.example2 artwork.xml.example3 artwork.xml.example4 aliasMap.csv mameMap.csv docs/ARTWORK.md tgdb_developers.json tgdb_publishers.json
+unix:supplementary.path=$${PREFIX}/bin
+unix:supplementary.files=\
+  supplementary/scraperdata/check_screenscraper_json_to_idmap.py \
+  supplementary/scraperdata/convert_platforms_json.py \
+  supplementary/scraperdata/peas_and_idmap_verify.py
 
-unix:cacheexamples.path=/usr/local/etc/skyscraper/cache
+unix:config.path=$${PREFIX}/etc/skyscraper
+unix:config.files=aliasMap.csv hints.xml mameMap.csv \
+  mobygames_platforms.json peas.json platforms_idmap.csv \
+  screenscraper_platforms.json tgdb_developers.json \
+  tgdb_genres.json tgdb_platforms.json tgdb_publishers.json
+
+unix:examples.path=$${PREFIX}/etc/skyscraper
+unix:examples.files=config.ini.example README.md artwork.xml \
+  artwork.xml.example1 artwork.xml.example2 artwork.xml.example3 \
+  artwork.xml.example4 docs/ARTWORK.md docs/CACHE.md
+
+unix:cacheexamples.path=$${PREFIX}/etc/skyscraper/cache
 unix:cacheexamples.files=cache/priorities.xml.example docs/CACHE.md
 
-unix:impexamples.path=/usr/local/etc/skyscraper/import
-unix:impexamples.files=docs/IMPORT.md import/definitions.dat.example1 import/definitions.dat.example2
+unix:impexamples.path=$${PREFIX}/etc/skyscraper/import
+unix:impexamples.files=docs/IMPORT.md import/definitions.dat.example1 \
+  import/definitions.dat.example2
 
-unix:resexamples.path=/usr/local/etc/skyscraper/resources
-unix:resexamples.files=resources/maskexample.png resources/frameexample.png resources/boxfront.png resources/boxside.png resources/scanlines1.png resources/scanlines2.png
+unix:resexamples.path=$${PREFIX}/etc/skyscraper/resources
+unix:resexamples.files=resources/maskexample.png resources/frameexample.png \
+  resources/boxfront.png resources/boxside.png resources/scanlines1.png \
+  resources/scanlines2.png
 
-unix:INSTALLS += target examples cacheexamples impexamples resexamples
+unix:INSTALLS += target config examples cacheexamples impexamples \
+  resexamples supplementary
 
 include(./VERSION)
+unix:dev=$$find(VERSION, "-dev")
+unix:count(dev, 1) {
+  rev=$$system(git describe --always)
+  VERSION=$$replace(VERSION, "dev", $$rev)
+}
 DEFINES+=VERSION=\\\"$$VERSION\\\"
+DEFINES+=PREFIX=\\\"$$PREFIX\\\"
+
+CONFIG(release, debug|release):DEFINES += QT_NO_DEBUG_OUTPUT
+
+include(win32/skyscraper.pro)
 
 HEADERS += src/skyscraper.h \
            src/netmanager.h \
            src/netcomm.h \
            src/xmlreader.h \
            src/settings.h \
+           src/cli.h \
            src/compositor.h \
+           src/config.h \
            src/strtools.h \
            src/imgtools.h \
            src/esgamelist.h \
@@ -44,6 +87,7 @@ HEADERS += src/skyscraper.h \
            src/abstractscraper.h \
            src/abstractfrontend.h \
            src/emulationstation.h \
+           src/esde.h \
            src/attractmode.h \
            src/pegasus.h \
            src/openretro.h \
@@ -54,7 +98,6 @@ HEADERS += src/skyscraper.h \
            src/mobygames.h \
            src/igdb.h \
            src/arcadedb.h \
-           src/scripter.h \
            src/platform.h \
            src/layer.h \
            src/fxshadow.h \
@@ -81,7 +124,10 @@ SOURCES += src/main.cpp \
            src/netmanager.cpp \
            src/netcomm.cpp \
            src/xmlreader.cpp \
+           src/settings.cpp \
+           src/cli.cpp \
            src/compositor.cpp \
+           src/config.cpp \
            src/strtools.cpp \
            src/imgtools.cpp \
            src/esgamelist.cpp \
@@ -93,6 +139,7 @@ SOURCES += src/main.cpp \
            src/abstractscraper.cpp \
            src/abstractfrontend.cpp \
            src/emulationstation.cpp \
+           src/esde.cpp \
            src/attractmode.cpp \
            src/pegasus.cpp \
            src/openretro.cpp \
@@ -103,7 +150,6 @@ SOURCES += src/main.cpp \
            src/mobygames.cpp \
            src/igdb.cpp \
            src/arcadedb.cpp \
-           src/scripter.cpp \
            src/platform.cpp \
            src/layer.cpp \
            src/fxshadow.cpp \
@@ -124,3 +170,6 @@ SOURCES += src/main.cpp \
            src/fxscanlines.cpp \
            src/nametools.cpp \
            src/queue.cpp
+
+SUBDIRS += \
+    win32/skyscraper.pro

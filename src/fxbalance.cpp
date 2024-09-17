@@ -23,53 +23,48 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
-#include <cmath>
-#include <QPainter>
-
 #include "fxbalance.h"
 
-FxBalance::FxBalance()
-{
-}
+#include <QPainter>
+#include <cmath>
 
-QImage FxBalance::applyEffect(const QImage &src, const Layer &layer)
-{
-  QImage canvas = src;
+FxBalance::FxBalance() {}
 
-  int redValue = layer.red;
-  int greenValue = layer.green;
-  int blueValue = layer.blue;
+QImage FxBalance::applyEffect(const QImage &src, const Layer &layer) {
+    QImage canvas = src;
 
-  int indexRed[256];
-  int indexGreen[256];
-  int indexBlue[256];
-  for(int a = 0; a < 256; ++a) {
-    indexRed[a] = truncate(a + redValue);
-    indexGreen[a] = truncate(a + greenValue);
-    indexBlue[a] = truncate(a + blueValue);
-  }
+    int redValue = layer.red;
+    int greenValue = layer.green;
+    int blueValue = layer.blue;
 
-  for(int y = 0; y < canvas.height(); ++y) {
-    QRgb* line =(QRgb *)canvas.scanLine(y);
-    for(int x = 0; x < canvas.width(); ++x) {
-      
-      line[x] = qPremultiply(qRgba(indexRed[qRed(line[x])],
-				   indexGreen[qGreen(line[x])],
-				   indexBlue[qBlue(line[x])],
-				   qAlpha(line[x])));
+    int indexRed[256];
+    int indexGreen[256];
+    int indexBlue[256];
+    for (int a = 0; a < 256; ++a) {
+        indexRed[a] = truncate(a + redValue);
+        indexGreen[a] = truncate(a + greenValue);
+        indexBlue[a] = truncate(a + blueValue);
     }
-  }
 
-  return canvas;
+    for (int y = 0; y < canvas.height(); ++y) {
+        QRgb *line = (QRgb *)canvas.scanLine(y);
+        for (int x = 0; x < canvas.width(); ++x) {
+
+            line[x] = qPremultiply(
+                qRgba(indexRed[qRed(line[x])], indexGreen[qGreen(line[x])],
+                      indexBlue[qBlue(line[x])], qAlpha(line[x])));
+        }
+    }
+
+    return canvas;
 }
 
-int FxBalance::truncate(int value)
-{
-  if(value > 255) {
-    value = 255;
-  }
-  if(value < 0) {
-    value = 0;
-  }
-  return value;
+int FxBalance::truncate(int value) {
+    if (value > 255) {
+        value = 255;
+    }
+    if (value < 0) {
+        value = 0;
+    }
+    return value;
 }

@@ -26,37 +26,36 @@
 #ifndef ARCADEDB_H
 #define ARCADEDB_H
 
+#include "abstractscraper.h"
+
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "abstractscraper.h"
-
-class ArcadeDB : public AbstractScraper
-{
-  Q_OBJECT
+class ArcadeDB : public AbstractScraper {
+    Q_OBJECT
 
 public:
-  ArcadeDB(Settings *config, QSharedPointer<NetManager> manager);
+    ArcadeDB(Settings *config, QSharedPointer<NetManager> manager);
 
 private:
-  QList<QString> getSearchNames(const QFileInfo &info) override;
-  void getSearchResults(QList<GameEntry> &gameEntries,
-			QString searchName, QString platform) override;
-  void getGameData(GameEntry &game) override;
-  void getReleaseDate(GameEntry &game) override;
-  void getPlayers(GameEntry &game) override;
-  void getTags(GameEntry &game) override;
-  void getPublisher(GameEntry &game) override;
-  void getDescription(GameEntry &game) override;
-  void getCover(GameEntry &game) override;
-  void getScreenshot(GameEntry &game) override;
-  void getWheel(GameEntry &game) override;
-  void getMarquee(GameEntry &game) override;
-  void getVideo(GameEntry &game) override;
+    QList<QString> getSearchNames(const QFileInfo &info,
+                                  QString &debug) override;
+    void getSearchResults(QList<GameEntry> &gameEntries, QString searchName,
+                          QString platform) override;
+    void getGameData(GameEntry &game) override;
+    void getReleaseDate(GameEntry &game) override;
+    void getPlayers(GameEntry &game) override;
+    void getTags(GameEntry &game) override;
+    void getPublisher(GameEntry &game) override;
+    void getDescription(GameEntry &game) override;
+    void getCover(GameEntry &game) override;
+    void getScreenshot(GameEntry &game) override;
+    void getWheel(GameEntry &game) override;
+    void getMarquee(GameEntry &game) override;
+    void getVideo(GameEntry &game) override;
 
-  QJsonDocument jsonDoc;
-  QJsonObject jsonObj;
-
+    QJsonDocument jsonDoc;
+    QJsonObject jsonObj;
 };
 
 #endif // ARCADEDB_H

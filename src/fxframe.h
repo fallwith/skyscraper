@@ -26,19 +26,17 @@
 #ifndef FXFRAME_H
 #define FXFRAME_H
 
-#include <QImage>
-
 #include "layer.h"
 #include "settings.h"
 
-class FxFrame : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxFrame : public QObject {
+    Q_OBJECT
 
 public:
-  FxFrame();
-  QImage applyEffect(const QImage &src, const Layer &layer, Settings *config);
-
+    FxFrame();
+    QImage applyEffect(const QImage &src, const Layer &layer, Settings *config);
 };
 
 #endif // FXFRAME_H

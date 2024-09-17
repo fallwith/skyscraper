@@ -26,20 +26,20 @@
 #ifndef NETMANAGER_H
 #define NETMANAGER_H
 
+#include <QMutex>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QMutex>
 
-class NetManager : public QNetworkAccessManager
-{
-  Q_OBJECT
+class NetManager : public QNetworkAccessManager {
+    Q_OBJECT
 
 public:
-  NetManager();
-  QNetworkReply *getRequest(const QNetworkRequest &request);
-  QNetworkReply *postRequest(const QNetworkRequest &request, const QByteArray &data);
+    NetManager();
+    QNetworkReply *getRequest(const QNetworkRequest &request);
+    QNetworkReply *postRequest(const QNetworkRequest &request,
+                               const QByteArray &data);
 
 private:
-  QMutex requestMutex;
+    QMutex requestMutex;
 };
 #endif // NETMANAGER_H

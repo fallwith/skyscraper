@@ -27,54 +27,63 @@
 #define SCRAPERWORKER_H
 
 #include "abstractscraper.h"
-#include "settings.h"
 #include "cache.h"
-#include "queue.h"
 #include "netmanager.h"
+#include "queue.h"
+#include "settings.h"
 
-#include <QImage>
 #include <QDir>
+#include <QImage>
 #include <QThread>
 
-class ScraperWorker : public QObject
-{
-  Q_OBJECT
+class ScraperWorker : public QObject {
+    Q_OBJECT
 
 public:
-  ScraperWorker(QSharedPointer<Queue> queue,
-		QSharedPointer<Cache> cache,
-		QSharedPointer<NetManager> manager,
-		Settings config,
-		QString threadId);
-  ~ScraperWorker();
-  void run();
-  bool forceEnd = false;
+    ScraperWorker(QSharedPointer<Queue> queue, QSharedPointer<Cache> cache,
+                  QSharedPointer<NetManager> manager, Settings config,
+                  QString threadId);
+    ~ScraperWorker();
+    void run();
+    bool forceEnd = false;
 
 signals:
-  void allDone();
-  void entryReady(const GameEntry &entry, const QString &output, const QString &debug);
+    void allDone();
+    void entryReady(const GameEntry &entry, const QString &output,
+                    const QString &debug);
 
 private:
-  AbstractScraper *scraper;
+    AbstractScraper *scraper;
 
-  Settings config;
+    Settings config;
 
-  QSharedPointer<Cache> cache;
-  QSharedPointer<NetManager> manager;
-  QSharedPointer<Queue> queue;
+    QSharedPointer<Cache> cache;
+    QSharedPointer<NetManager> manager;
+    QSharedPointer<Queue> queue;
 
-  QString platformOrig;
-  QString threadId;
+    QString platformOrig;
+    QString threadId;
 
-  unsigned int editDistance(const std::string& s1, const std::string& s2);
+    unsigned int editDistance(const std::string &s1, const std::string &s2);
 
-  GameEntry getBestEntry(const QList<GameEntry> &gameEntries, QString compareTitle,
-			 int &lowestDistance);
-  GameEntry getEntryFromUser(const QList<GameEntry> &gameEntries, const GameEntry &suggestedGame,
-			     const QString &compareTitle, int &lowestDistance);
-  int getSearchMatch(const QString &title, const QString &compareTitle, const int &lowestDistance);
+    GameEntry getBestEntry(const QList<GameEntry> &gameEntries,
+                           QString compareTitle, int compareYear,
+                           int &lowestDistance);
+    GameEntry getEntryFromUser(const QList<GameEntry> &gameEntries,
+                               const GameEntry &suggestedGame,
+                               const QString &compareTitle,
+                               int &lowestDistance);
+    int getSearchMatch(const QString &title, const QString &compareTitle,
+                       const int &lowestDistance);
+    int getReleaseYear(const QString releaseDateString);
 
-  bool limitReached(QString &output);
+    bool limitReached(QString &output);
+    void copyMedia(const QString &mediaType, const QString &completeBaseName,
+                   const QString &subPath, GameEntry &game);
+    bool matchTitles(const QString &thiz, const QString &that);
+    QList<QString> splitTitle(const QString &title);
+    bool matchWords(const QList<QString> theseWords,
+                    const QList<QString> thoseWords);
 };
 
 #endif // SCRAPERWORKER_H

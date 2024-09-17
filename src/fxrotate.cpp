@@ -23,28 +23,25 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
-#include <cmath>
-#include <QPainter>
-
 #include "fxrotate.h"
 
-FxRotate::FxRotate()
-{
-}
+#include <QPainter>
+#include <cmath>
 
-QImage FxRotate::applyEffect(const QImage &src, const Layer &layer)
-{
-  int angle = layer.delta;
+FxRotate::FxRotate() {}
 
-  QTransform rotate;
-  rotate.rotate(angle, layer.axis);
-  if(layer.axis == Qt::YAxis) {
-  rotate.translate(0, - src.height() / 2.0);
-  } else if(layer.axis == Qt::XAxis) {
-    rotate.translate(- src.width() / 2.0, 0);
-  }
+QImage FxRotate::applyEffect(const QImage &src, const Layer &layer) {
+    int angle = layer.delta;
 
-  QImage canvas = src.transformed(rotate, Qt::SmoothTransformation);
- 
-  return canvas;
+    QTransform rotate;
+    rotate.rotate(angle, layer.axis);
+    if (layer.axis == Qt::YAxis) {
+        rotate.translate(0, -src.height() / 2.0);
+    } else if (layer.axis == Qt::XAxis) {
+        rotate.translate(-src.width() / 2.0, 0);
+    }
+
+    QImage canvas = src.transformed(rotate, Qt::SmoothTransformation);
+
+    return canvas;
 }

@@ -28,22 +28,22 @@
 
 #include <QObject>
 
-class StrTools : public QObject
-{
+class StrTools : public QObject {
 public:
-  static QString xmlUnescape(QString str);
-  static QString xmlEscape(QString str);
-  static QByteArray magic(const QByteArray str);
-  static QByteArray unMagic(const QByteArray str);
-  static QString conformPlayers(const QString str);
-  static QString conformAges(QString str);
-  static QString conformReleaseDate(QString str);
-  static QString conformTags(const QString str);
-  static QString getVersionHeader();
-  static QString stripBrackets(const QString str);
-  static QString stripHtmlTags(QString str);
-  static QString getMd5Sum(const QByteArray &data);
-
+    static QString xmlUnescape(QString str);
+    static QString xmlEscape(QString str);
+    static QByteArray magic(const QByteArray str);
+    static QByteArray unMagic(const QByteArray str);
+    static QString conformPlayers(const QString str);
+    static QString conformAges(QString str);
+    static QString conformReleaseDate(QString str);
+    static QString conformTags(const QString str);
+    static QString getVersionHeader();
+    static QString getVersionBanner();
+    static QString stripBrackets(const QString str);
+    static QString stripHtmlTags(QString str);
+    static QString getMd5Sum(const QByteArray &data);
+    static QString tidyText(QString text, bool ignoreBangs);
 };
 
 #endif // STRTOOLS_H

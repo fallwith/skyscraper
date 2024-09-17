@@ -24,164 +24,164 @@
  */
 
 #include "worldofspectrum.h"
+
 #include "strtools.h"
 
 WorldOfSpectrum::WorldOfSpectrum(Settings *config,
-				 QSharedPointer<NetManager> manager)
-  : AbstractScraper(config, manager)
-{
-  baseUrl = "https://www.worldofspectrum.org";
+                                 QSharedPointer<NetManager> manager)
+    : AbstractScraper(config, manager, MatchType::MATCH_MANY) {
+    baseUrl = "https://www.worldofspectrum.org";
 
-  searchResultPre = "<CENTER><FONT FACE=\"Arial,Helvetica\" COLOR=\"#000000\" SIZE=\"+1\">";
-  urlPre.append("Full title");
-  urlPre.append("<A HREF=\"");
-  urlPost = "\" ";
-  titlePre.append("TITLE=\"Get direct link to this entry\">");
-  titlePost = "</A>";
-  releaseDatePre.append("Year of release");
-  releaseDatePre.append("<FONT FACE=");
-  releaseDatePre.append("\">");
-  releaseDatePost = "</FONT>";
-  publisherPre.append("Find other titles from this publisher\">");
-  publisherPost = "</A>";
-  developerPre.append("Find other titles by this author\">");
-  developerPost = "</A>";
-  playersPre.append("Number of players");
-  playersPre.append("<FONT");
-  playersPre.append("\">");
-  playersPost = "</FONT>";
-  tagsPre.append("Type</FONT>");
-  tagsPre.append("<FONT");
-  tagsPre.append("\">");
-  tagsPost = "</FONT>";
-  descriptionPre.append("Additional info");
-  descriptionPre.append("<FONT");
-  descriptionPre.append("\">");
-  descriptionPost = "</FONT>";
-  coverPre.append("<TABLE BORDER=0 ALIGN=RIGHT>");
-  coverPre.append("<TR><TD>");
-  coverPost = "\" TARGET";
-  screenshotPost = "\" BORDER";
+    searchResultPre =
+        "<CENTER><FONT FACE=\"Arial,Helvetica\" COLOR=\"#000000\" SIZE=\"+1\">";
+    urlPre.append("Full title");
+    urlPre.append("<A HREF=\"");
+    urlPost = "\" ";
+    titlePre.append("TITLE=\"Get direct link to this entry\">");
+    titlePost = "</A>";
+    releaseDatePre.append("Year of release");
+    releaseDatePre.append("<FONT FACE=");
+    releaseDatePre.append("\">");
+    releaseDatePost = "</FONT>";
+    publisherPre.append("Find other titles from this publisher\">");
+    publisherPost = "</A>";
+    developerPre.append("Find other titles by this author\">");
+    developerPost = "</A>";
+    playersPre.append("Number of players");
+    playersPre.append("<FONT");
+    playersPre.append("\">");
+    playersPost = "</FONT>";
+    tagsPre.append("Type</FONT>");
+    tagsPre.append("<FONT");
+    tagsPre.append("\">");
+    tagsPost = "</FONT>";
+    descriptionPre.append("Additional info");
+    descriptionPre.append("<FONT");
+    descriptionPre.append("\">");
+    descriptionPost = "</FONT>";
+    coverPre.append("<TABLE BORDER=0 ALIGN=RIGHT>");
+    coverPre.append("<TR><TD>");
+    coverPost = "\" TARGET";
+    screenshotPost = "\" BORDER";
 
-  fetchOrder.append(COVER);
-  fetchOrder.append(SCREENSHOT);
-  fetchOrder.append(RELEASEDATE);
-  fetchOrder.append(PUBLISHER);
-  fetchOrder.append(DEVELOPER);
-  fetchOrder.append(PLAYERS);
-  fetchOrder.append(TAGS);
-  fetchOrder.append(DESCRIPTION);
+    fetchOrder.append(COVER);
+    fetchOrder.append(SCREENSHOT);
+    fetchOrder.append(RELEASEDATE);
+    fetchOrder.append(PUBLISHER);
+    fetchOrder.append(DEVELOPER);
+    fetchOrder.append(PLAYERS);
+    fetchOrder.append(TAGS);
+    fetchOrder.append(DESCRIPTION);
 }
 
 void WorldOfSpectrum::getSearchResults(QList<GameEntry> &gameEntries,
-				 QString searchName, QString platform)
-{
-  searchName = searchName.replace("the+", "");
-  netComm->request("https://www.worldofspectrum.org/infoseek.cgi", "regexp=" + searchName + "&model=spectrum&loadpics=3");
-  q.exec();
-  data = netComm->getData();
+                                       QString searchName, QString platform) {
+    searchName = searchName.replace("the+", "");
+    netComm->request("https://www.worldofspectrum.org/infoseek.cgi",
+                     "regexp=" + searchName + "&model=spectrum&loadpics=3");
+    q.exec();
+    data = netComm->getData();
 
-  GameEntry game;
+    GameEntry game;
 
-  while(data.indexOf(searchResultPre.toUtf8()) != -1) {
-    nomNom(searchResultPre);
+    while (data.indexOf(searchResultPre.toUtf8()) != -1) {
+        nomNom(searchResultPre);
 
-    // Digest until url
-    for(const auto &nom: urlPre) {
-      nomNom(nom);
+        // Digest until url
+        for (const auto &nom : urlPre) {
+            nomNom(nom);
+        }
+        game.url = baseUrl + data.left(data.indexOf(urlPost.toUtf8())) +
+                   "&loadpics=3&allowadult=on";
+
+        // Digest until title
+        for (const auto &nom : titlePre) {
+            nomNom(nom);
+        }
+        game.title = data.left(data.indexOf(titlePost.toUtf8()));
+        if (game.title.contains(", The")) {
+            game.title = game.title.replace(", The", "").prepend("The ");
+        }
+
+        game.platform = "zxspectrum";
+
+        if (platformMatch(game.platform, platform)) {
+            gameEntries.append(game);
+        }
     }
-    game.url = baseUrl + data.left(data.indexOf(urlPost.toUtf8())) + "&loadpics=3&allowadult=on";
-
-    // Digest until title
-    for(const auto &nom: titlePre) {
-      nomNom(nom);
-    }
-    game.title = data.left(data.indexOf(titlePost.toUtf8()));
-    if(game.title.contains(", The")) {
-      game.title = game.title.replace(", The", "").prepend("The ");
-    }
-
-    game.platform = "zxspectrum";
-
-    if(platformMatch(game.platform, platform)) {
-      gameEntries.append(game);
-    }
-  }
 }
 
-void WorldOfSpectrum::getDescription(GameEntry &game)
-{
-  for(const auto &nom: descriptionPre) {
-    if(!checkNom(nom)) {
-      return;
+void WorldOfSpectrum::getDescription(GameEntry &game) {
+    for (const auto &nom : descriptionPre) {
+        if (!checkNom(nom)) {
+            return;
+        }
     }
-  }
-  for(const auto &nom: descriptionPre) {
-    nomNom(nom);
-  }
-  game.description = data.left(data.indexOf(descriptionPost.toUtf8()));
-  // Remove all html tags within description
-  game.description = StrTools::stripHtmlTags(game.description);
-}
-
-void WorldOfSpectrum::getCover(GameEntry &game)
-{
-  for(const auto &nom: coverPre) {
-    nomNom(nom);
-  }
-  if(data.left(2) != "<A") {
-    return;
-  }
-  nomNom("<A HREF=\"");
-  QString coverUrl = data.left(data.indexOf(coverPost.toUtf8()));
-  if(coverUrl.indexOf("http") != -1) {
-    netComm->request(coverUrl);
-  } else {
-    netComm->request(baseUrl + (coverUrl.left(1) == "/"?"":"/") + coverUrl);
-  }
-  q.exec();
-  QImage image;
-  if(netComm->getError() == QNetworkReply::NoError &&
-     image.loadFromData(netComm->getData())) {
-    game.coverData = netComm->getData();
-  }
-}
-
-void WorldOfSpectrum::getScreenshot(GameEntry &game)
-{
-  if(data.indexOf("<IMG SRC=\"/pub/sinclair/screens/in-game") == -1) {
-    return;
-  }
-  nomNom("<IMG SRC=\"/pub/sinclair/screens/in-game", false);
-  nomNom("<IMG SRC=\"");
-  QString screenshotUrl = data.left(data.indexOf(screenshotPost.toUtf8()));
-  if(screenshotUrl.indexOf("http") != -1) {
-    netComm->request(screenshotUrl);
-  } else {
-    netComm->request(baseUrl + (screenshotUrl.left(1) == "/"?"":"/") + screenshotUrl);
-  }
-  q.exec();
-  QImage image;
-  if(netComm->getError() == QNetworkReply::NoError &&
-     image.loadFromData(netComm->getData())) {
-    game.screenshotData = netComm->getData();
-  }
-}
-
-void WorldOfSpectrum::getReleaseDate(GameEntry &game)
-{
-  for(const auto &nom: releaseDatePre) {
-    if(!checkNom(nom)) {
-      return;
+    for (const auto &nom : descriptionPre) {
+        nomNom(nom);
     }
-  }
-  for(const auto &nom: releaseDatePre) {
-    nomNom(nom);
-  }
-  game.releaseDate = data.left(data.indexOf(releaseDatePost.toUtf8()));
-  bool isInt = true;
-  game.releaseDate.toInt(&isInt);
-  if(!isInt) {
-    game.releaseDate = "";
-  }
+    game.description = data.left(data.indexOf(descriptionPost.toUtf8()));
+    // Remove all html tags within description
+    game.description = StrTools::stripHtmlTags(game.description);
+}
+
+void WorldOfSpectrum::getCover(GameEntry &game) {
+    for (const auto &nom : coverPre) {
+        nomNom(nom);
+    }
+    if (data.left(2) != "<A") {
+        return;
+    }
+    nomNom("<A HREF=\"");
+    QString coverUrl = data.left(data.indexOf(coverPost.toUtf8()));
+    if (coverUrl.indexOf("http") != -1) {
+        netComm->request(coverUrl);
+    } else {
+        netComm->request(baseUrl + (coverUrl.left(1) == "/" ? "" : "/") +
+                         coverUrl);
+    }
+    q.exec();
+    QImage image;
+    if (netComm->getError() == QNetworkReply::NoError &&
+        image.loadFromData(netComm->getData())) {
+        game.coverData = netComm->getData();
+    }
+}
+
+void WorldOfSpectrum::getScreenshot(GameEntry &game) {
+    if (data.indexOf("<IMG SRC=\"/pub/sinclair/screens/in-game") == -1) {
+        return;
+    }
+    nomNom("<IMG SRC=\"/pub/sinclair/screens/in-game", false);
+    nomNom("<IMG SRC=\"");
+    QString screenshotUrl = data.left(data.indexOf(screenshotPost.toUtf8()));
+    if (screenshotUrl.indexOf("http") != -1) {
+        netComm->request(screenshotUrl);
+    } else {
+        netComm->request(baseUrl + (screenshotUrl.left(1) == "/" ? "" : "/") +
+                         screenshotUrl);
+    }
+    q.exec();
+    QImage image;
+    if (netComm->getError() == QNetworkReply::NoError &&
+        image.loadFromData(netComm->getData())) {
+        game.screenshotData = netComm->getData();
+    }
+}
+
+void WorldOfSpectrum::getReleaseDate(GameEntry &game) {
+    for (const auto &nom : releaseDatePre) {
+        if (!checkNom(nom)) {
+            return;
+        }
+    }
+    for (const auto &nom : releaseDatePre) {
+        nomNom(nom);
+    }
+    game.releaseDate = data.left(data.indexOf(releaseDatePost.toUtf8()));
+    bool isInt = true;
+    game.releaseDate.toInt(&isInt);
+    if (!isInt) {
+        game.releaseDate = "";
+    }
 }

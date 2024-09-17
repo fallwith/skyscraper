@@ -49,74 +49,74 @@ constexpr int T_SCANLINES = 18;
 #include <QImage>
 #include <QPainter>
 
-class Layer
-{
+class Layer {
 public:
-  Layer();
+    Layer();
 
-  int type = T_NONE;
-  QImage canvas = QImage();
-  QString resType = "";
-  QString resource = "";
-  QString align = "";
-  QString valign = "";
-  QString scaling = "";
-  int x = 0;
-  int y = 0;
-  int width = -1;
-  int height = -1;
-  double mPixels = -1.0;
-  int value = -1; // Use this for a value that can only be positive
-  int delta = 0; // Use this for a value that can both be positive and negative
-  int red = -1;
-  int green = -1;
-  int blue = -1;
-  int distance = -1;
-  int softness = -1;
-  int opacity = -1;
-  QPainter::CompositionMode mode = QPainter::CompositionMode_SourceOver;
-  Qt::Axis axis = Qt::ZAxis;
-  int saturation = 127;
+    int type = T_NONE;
+    QImage canvas = QImage();
+    QString resType = "";
+    QString resource = "";
+    QString align = "";
+    QString valign = "";
+    QString scaling = "";
+    int x = 0;
+    int y = 0;
+    int width = -1;
+    int height = -1;
+    double mPixels = -1.0;
+    int value = -1; // Use this for a value that can only be positive
+    int delta =
+        0; // Use this for a value that can both be positive and negative
+    int red = -1;
+    int green = -1;
+    int blue = -1;
+    int distance = -1;
+    int softness = -1;
+    int opacity = -1;
+    QPainter::CompositionMode mode = QPainter::CompositionMode_SourceOver;
+    Qt::Axis axis = Qt::ZAxis;
+    int saturation = 127;
 
-  // Setters
-  void setMode(const QString &mode);
-  void setAxis(const QString &axis);
-  void setType(const int &type);
-  void setResType(const QString &resType);
-  void setCanvas(const QImage &canvas);
-  void setResource(const QString &resource);
-  void setAlign(const QString &align);
-  void setVAlign(const QString &valign);
-  void setScaling(const QString &value);
-  void setX(const int &x);
-  void setY(const int &y);
-  void setWidth(const int &width);
-  void setHeight(const int &height);
-  void setMPixels(const double &mPixels);
-  void setDelta(const int &delta);
-  void setValue(const int &value);
-  void setRed(const int &red);
-  void setGreen(const int &green);
-  void setBlue(const int &blue);
-  void setDistance(const int &distance);
-  void setSoftness(const int &softness);
-  void setOpacity(const int &opacity);
+    // Setters
+    void setMode(const QString &mode);
+    void setAxis(const QString &axis);
+    void setType(const int &type);
+    void setResType(const QString &resType);
+    void setCanvas(const QImage &canvas);
+    void setResource(const QString &resource);
+    void setAlign(const QString &align);
+    void setVAlign(const QString &valign);
+    void setScaling(const QString &value);
+    void setX(const int &x);
+    void setY(const int &y);
+    void setWidth(const int &width);
+    void setHeight(const int &height);
+    void setMPixels(const double &mPixels);
+    void setDelta(const int &delta);
+    void setValue(const int &value);
+    void setRed(const int &red);
+    void setGreen(const int &green);
+    void setBlue(const int &blue);
+    void setDistance(const int &distance);
+    void setSoftness(const int &softness);
+    void setOpacity(const int &opacity);
 
-  void addLayer(const Layer &layer);
-  QList<Layer> getLayers();
+    void addLayer(const Layer &layer);
+    QList<Layer> getLayers();
 
-  void makeTransparent();
-  void scale();
-  void premultiply();
-  void updateSize();
-  bool hasLayers();
-  bool save(QString filename);
+    void makeTransparent();
+    void scale();
+    void premultiply();
+    void updateSize();
+    bool hasLayers();
+    bool save(QString filename);
 
-  void colorFromHex(QString color);
+    void colorFromHex(QString color);
 
 private:
-  // Contains all nested layers and effects
-  QList<Layer> layers;
+    // Contains all nested layers and effects
+    QList<Layer> layers;
 };
 
 #endif // LAYER_H

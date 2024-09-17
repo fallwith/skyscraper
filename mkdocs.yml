@@ -1,0 +1,93 @@
+# Project information
+site_name: "Skyscraper"
+site_description: "Skyscraper User Guide"
+site_url: "https://gemba.github.io/skyscraper/"
+site_dir: public
+
+# Repository
+repo_name: "Skyscraper"
+repo_url: "https://github.com/Gemba/Skyscraper/"
+
+# Copyright
+copyright: "&copy; 2017-2023 Lars Muldjord and contributors, &copy; 2024 Gemba and contributors"
+
+# Plugins
+plugins:
+  - search
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.betterem
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true
+  - pymdownx.keys
+  - pymdownx.superfences
+  - pymdownx.tilde
+
+# Configuration
+theme:
+  name: "material"
+  language: "en"
+  logo: "resources/skyscraper_logo.png"
+  favicon: "resources/skyscraper_logo.png"
+  features:
+    - content.code.copy
+    - navigation.indexes
+    - navigation.path
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+
+# Customisation
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Gemba/Skyscraper
+
+# CSS
+extra_css:
+  - "stylesheets/mods.css"
+
+# Navigation tree
+nav:
+- Home: index.md
+- Sample Use Case: USECASE.md
+- Skyscraper Input:
+  - Scrapers: SCRAPINGMODULES.md
+  - Import of Game Data: IMPORT.md
+- Skyscraper Output:
+  - Artwork & Layout: ARTWORK.md
+  - Frontends: FRONTENDS.md
+- Configuration:  
+  - The config.ini File: CONFIGINI.md
+  - Command Line Options: CLIHELP.md
+  - Platforms: PLATFORMS.md
+  - Languages: LANGUAGES.md
+  - Regions: REGIONS.md
+- Varia:
+  - FAQ: FAQ.md
+  - Skyscraper Cache: CACHE.md
+- About:
+  - Changelog: CHANGELOG.md
+  - Contributing: CONTRIBUTING.md

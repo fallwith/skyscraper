@@ -26,18 +26,16 @@
 #ifndef FXSTROKE_H
 #define FXSTROKE_H
 
-#include <QImage>
-
 #include "layer.h"
 
-class FxStroke : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxStroke : public QObject {
+    Q_OBJECT
 
 public:
-  FxStroke();
-  QImage applyEffect(const QImage &src, const Layer &layer);
-
+    FxStroke();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 };
 
 #endif // FXSTROKE_H

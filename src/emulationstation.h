@@ -27,27 +27,58 @@
 #define EMULATIONSTATION_H
 
 #include "abstractfrontend.h"
+#include "gameentry.h"
+#include "platform.h"
 
-class EmulationStation : public AbstractFrontend
-{
-  Q_OBJECT
+#include <QRegularExpression>
+
+class EmulationStation : public AbstractFrontend {
+    Q_OBJECT
 
 public:
-  EmulationStation();
-  void assembleList(QString &finalOutput, QList<GameEntry> &gameEntries) override;
-  bool skipExisting(QList<GameEntry> &gameEntries, QSharedPointer<Queue> queue) override;
-  bool canSkip() override;
-  bool loadOldGameList(const QString &gameListFileString) override;
-  void preserveFromOld(GameEntry &entry) override;
-  QString getGameListFileName() override;
-  QString getInputFolder() override;
-  QString getGameListFolder() override;
-  QString getCoversFolder() override;
-  QString getScreenshotsFolder() override;
-  QString getWheelsFolder() override;
-  QString getMarqueesFolder() override;
-  QString getVideosFolder() override;
+    EmulationStation();
 
+    void assembleList(QString &finalOutput,
+                      QList<GameEntry> &gameEntries) override;
+    bool skipExisting(QList<GameEntry> &gameEntries,
+                      QSharedPointer<Queue> queue) override;
+    bool canSkip() override;
+    bool loadOldGameList(const QString &gameListFileString) override;
+    void preserveFromOld(GameEntry &entry) override;
+
+    QString getGameListFileName() override;
+    QString getInputFolder() override;
+    QString getGameListFolder() override;
+    QString getCoversFolder() override;
+    QString getScreenshotsFolder() override;
+    QString getWheelsFolder() override;
+    QString getMarqueesFolder() override;
+    QString getTexturesFolder() override;
+    QString getVideosFolder() override;
+    QString getManualsFolder() override;
+
+protected:
+    virtual QStringList createEsVariantXml(const GameEntry &entry);
+    virtual QStringList extraGamelistTags(bool isFolder /* ignored on RP ES */);
+    virtual GameEntry::Format gamelistFormat() {
+        return GameEntry::Format::RETROPIE;
+    };
+
+private:
+    QString createXml(GameEntry &entry);
+    bool isGameLauncher(QString &sub);
+    void addFolder(QString &base, QString sub, QList<GameEntry> &added);
+    bool existingInGamelist(GameEntry &entry);
+    QString elem(const QString &elem, const QString &data, bool addEmptyElem,
+                 bool isPath = false);
+
+    const inline QRegularExpression isoTimeRe() const {
+        return QRegularExpression("(^$|T[0-9]{6}$)");
+    }
+    const inline QString platformFileExtensions() {
+        return Platform::get().getFormats(config->platform, config->extensions,
+                                          config->addExtensions);
+    }
 };
 
 #endif // EMULATIONSTATION_H

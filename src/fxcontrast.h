@@ -26,21 +26,19 @@
 #ifndef FXCONTRAST_H
 #define FXCONTRAST_H
 
-#include <QImage>
-
 #include "layer.h"
 
-class FxContrast : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxContrast : public QObject {
+    Q_OBJECT
 
 public:
-  FxContrast();
-  QImage applyEffect(const QImage &src, const Layer &layer);
+    FxContrast();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 
 private:
-  int truncate(int value);
-
+    int truncate(int value);
 };
 
 #endif // FXCONTRAST_H

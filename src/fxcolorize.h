@@ -26,21 +26,19 @@
 #ifndef FXCOLORIZE_H
 #define FXCOLORIZE_H
 
-#include <QImage>
-
 #include "layer.h"
 
-class FxColorize : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxColorize : public QObject {
+    Q_OBJECT
 
 public:
-  FxColorize();
-  QImage applyEffect(const QImage &src, const Layer &layer);
+    FxColorize();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 
 private:
-  int truncate(int value);
-
+    int truncate(int value);
 };
 
 #endif // FXCOLORIZE_H

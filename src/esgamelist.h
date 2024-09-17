@@ -27,25 +27,27 @@
 #define ESGAMELIST_H
 
 #include "abstractscraper.h"
+
 #include <QDomDocument>
 
-class ESGameList: public AbstractScraper {
-Q_OBJECT
+class ESGameList : public AbstractScraper {
+    Q_OBJECT
 
 public:
-  ESGameList(Settings *config, QSharedPointer<NetManager> manager);
+    ESGameList(Settings *config, QSharedPointer<NetManager> manager);
 
 private:
-  QList<QString> getSearchNames(const QFileInfo &info) override;
-  void getSearchResults(QList<GameEntry> &gameEntries, QString searchName,
-			QString platform) override;
-  void getGameData(GameEntry &game) override;
-  QByteArray loadImageData(const QString fileName);
-  void loadVideoData(GameEntry &game, const QString fileName);
-  QString getAbsoluteFileName(const QString fileName);
+    QList<QString> getSearchNames(const QFileInfo &info,
+                                  QString &debug) override;
+    void getSearchResults(QList<GameEntry> &gameEntries, QString searchName,
+                          QString platform) override;
+    void getGameData(GameEntry &game) override;
+    QByteArray loadBinaryData(const QString fileName);
+    void loadVideoData(GameEntry &game, const QString fileName);
+    QString getAbsoluteFileName(const QString fileName);
 
-  QDomNodeList games;
-  QDomNode gameNode;
+    QDomNodeList games;
+    QDomNode gameNode;
 };
 
 #endif // ESGAMELIST_H

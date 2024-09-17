@@ -26,26 +26,27 @@
 #ifndef FXBLUR_H
 #define FXBLUR_H
 
+#include "gameentry.h"
+#include "layer.h"
+#include "settings.h"
+
 #include <QImage>
 #include <QXmlStreamReader>
 
-#include "settings.h"
-#include "gameentry.h"
-#include "layer.h"
-
-class FxBlur : public QObject
-{
-  Q_OBJECT
+class FxBlur : public QObject {
+    Q_OBJECT
 
 public:
-  FxBlur();
-  QImage applyEffect(const QImage &src, const Layer &layer);
+    FxBlur();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 
 private:
-  void boxBlur(QRgb *buffer1, QRgb *buffer2, int width, int height, int radius);
-  void boxBlurHorizontal(QRgb *buffer1, QRgb *buffer2, int width, int height, int radius);
-  void boxBlurTotal(QRgb *buffer1, QRgb *buffer2, int width, int height, int radius);
-
+    void boxBlur(QRgb *buffer1, QRgb *buffer2, int width, int height,
+                 int radius);
+    void boxBlurHorizontal(QRgb *buffer1, QRgb *buffer2, int width, int height,
+                           int radius);
+    void boxBlurTotal(QRgb *buffer1, QRgb *buffer2, int width, int height,
+                      int radius);
 };
 
 #endif // FXBLUR_H

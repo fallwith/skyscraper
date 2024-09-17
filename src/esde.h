@@ -1,16 +1,10 @@
-/***************************************************************************
- *            scripter.h
- *
- *  Sat Dec 23 10:00:00 CEST 2017
- *  Copyright 2017 Lars Muldjord
- *  muldjordlars@gmail.com
- ****************************************************************************/
 /*
  *  This file is part of skyscraper.
+ *  Copyright 2024 Gemba @ GitHub
  *
  *  skyscraper is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  skyscraper is distributed in the hope that it will be useful,
@@ -23,19 +17,28 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
-#ifndef SCRIPTER_H
-#define SCRIPTER_H
+#ifndef ESDE_H
+#define ESDE_H
 
-#include <QObject>
+#include "emulationstation.h"
+#include "gameentry.h"
 
-class Scripter : public QObject
-{
-  Q_OBJECT
+class Esde : public EmulationStation {
+    Q_OBJECT
 
 public:
-  Scripter();
-  ~Scripter();
+    Esde();
 
+    QString getInputFolder() override;
+    QString getGameListFolder() override;
+    QString getMediaFolder() override;
+
+protected:
+    QStringList createEsVariantXml(const GameEntry &entry) override;
+    QStringList extraGamelistTags(bool isFolder) override;
+    GameEntry::Format gamelistFormat() override {
+        return GameEntry::Format::ESDE;
+    };
 };
 
-#endif // SCRIPTER_H
+#endif // ESDE_H

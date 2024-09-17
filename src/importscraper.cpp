@@ -23,268 +23,361 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
-#include <QDir>
-
 #include "importscraper.h"
 
+#include <QDir>
+#include <QDomDocument>
+
 ImportScraper::ImportScraper(Settings *config,
-			     QSharedPointer<NetManager> manager)
-  : AbstractScraper(config, manager)
-{
-  fetchOrder.append(TITLE);
-  fetchOrder.append(DEVELOPER);
-  fetchOrder.append(PUBLISHER);
-  fetchOrder.append(COVER);
-  fetchOrder.append(SCREENSHOT);
-  fetchOrder.append(WHEEL);
-  fetchOrder.append(MARQUEE);
-  fetchOrder.append(VIDEO);
-  fetchOrder.append(RELEASEDATE);
-  fetchOrder.append(TAGS);
-  fetchOrder.append(PLAYERS);
-  fetchOrder.append(AGES);
-  fetchOrder.append(RATING);
-  fetchOrder.append(DESCRIPTION);
+                             QSharedPointer<NetManager> manager)
+    : AbstractScraper(config, manager, MatchType::MATCH_ONE) {
+    fetchOrder.append(TITLE);
+    fetchOrder.append(DEVELOPER);
+    fetchOrder.append(PUBLISHER);
+    fetchOrder.append(COVER);
+    fetchOrder.append(SCREENSHOT);
+    fetchOrder.append(WHEEL);
+    fetchOrder.append(MARQUEE);
+    fetchOrder.append(TEXTURE);
+    fetchOrder.append(VIDEO);
+    fetchOrder.append(MANUAL);
+    fetchOrder.append(RELEASEDATE);
+    fetchOrder.append(TAGS);
+    fetchOrder.append(PLAYERS);
+    fetchOrder.append(AGES);
+    fetchOrder.append(RATING);
+    fetchOrder.append(DESCRIPTION);
 
-  covers = QDir(config->importFolder + "/covers", "*.*",
-		QDir::Name, QDir::Files | QDir::NoDotAndDotDot).entryInfoList();
-  screenshots = QDir(config->importFolder + "/screenshots", "*.*",
-	       QDir::Name, QDir::Files | QDir::NoDotAndDotDot).entryInfoList();
-  wheels = QDir(config->importFolder + "/wheels", "*.*",
-		QDir::Name, QDir::Files | QDir::NoDotAndDotDot).entryInfoList();
-  marquees = QDir(config->importFolder + "/marquees", "*.*",
-		  QDir::Name, QDir::Files | QDir::NoDotAndDotDot).entryInfoList();
-  videos = QDir(config->importFolder + "/videos", "*.*",
-		QDir::Name, QDir::Files | QDir::NoDotAndDotDot).entryInfoList();
-  textual = QDir(config->importFolder + "/textual", "*.*",
-		 QDir::Name, QDir::Files | QDir::NoDotAndDotDot).entryInfoList();
-  loadDefinitions();
+    covers = QDir(config->importFolder + "/covers", "*.*", QDir::Name,
+                  QDir::Files | QDir::NoDotAndDotDot)
+                 .entryInfoList();
+    screenshots = QDir(config->importFolder + "/screenshots", "*.*", QDir::Name,
+                       QDir::Files | QDir::NoDotAndDotDot)
+                      .entryInfoList();
+    wheels = QDir(config->importFolder + "/wheels", "*.*", QDir::Name,
+                  QDir::Files | QDir::NoDotAndDotDot)
+                 .entryInfoList();
+    marquees = QDir(config->importFolder + "/marquees", "*.*", QDir::Name,
+                    QDir::Files | QDir::NoDotAndDotDot)
+                   .entryInfoList();
+    textures = QDir(config->importFolder + "/textures", "*.*", QDir::Name,
+                    QDir::Files | QDir::NoDotAndDotDot)
+                   .entryInfoList();
+    videos = QDir(config->importFolder + "/videos", "*.*", QDir::Name,
+                  QDir::Files | QDir::NoDotAndDotDot)
+                 .entryInfoList();
+    manuals = QDir(config->importFolder + "/manuals", "*.*", QDir::Name,
+                   QDir::Files | QDir::NoDotAndDotDot)
+                  .entryInfoList();
+    textual = QDir(config->importFolder + "/textual", "*.*", QDir::Name,
+                   QDir::Files | QDir::NoDotAndDotDot)
+                  .entryInfoList();
+    loadDefinitions();
 }
 
-void ImportScraper::getGameData(GameEntry &game)
-{
-  // Always reset game title at this point, to avoid saving the dummy title in cache
-  game.title = "";
+void ImportScraper::getGameData(GameEntry &game) {
+    // Always reset game title at this point, to avoid saving the dummy title in
+    // cache
+    game.title = "";
 
-  loadData();
+    loadData();
+    populateGameEntry(game);
+}
 
-  QByteArray dataOrig = data;
-  for(int a = 0; a < fetchOrder.length(); ++a) {
-    switch(fetchOrder.at(a)) {
-    case TITLE:
-      getTitle(game);
-      data = dataOrig;
-      break;
-    case DESCRIPTION:
-      getDescription(game);
-      data = dataOrig;
-      break;
-    case DEVELOPER:
-      getDeveloper(game);
-      data = dataOrig;
-      break;
-    case PUBLISHER:
-      getPublisher(game);
-      data = dataOrig;
-      break;
-    case PLAYERS:
-      getPlayers(game);
-      data = dataOrig;
-      break;
-    case AGES:
-      getAges(game);
-      data = dataOrig;
-      break;
-    case RATING:
-      getRating(game);
-      data = dataOrig;
-      break;
-    case TAGS:
-      getTags(game);
-      data = dataOrig;
-      break;
-    case RELEASEDATE:
-      getReleaseDate(game);
-      data = dataOrig;
-      break;
-    case COVER:
-      getCover(game);
-      break;
-    case SCREENSHOT:
-      getScreenshot(game);
-      break;
-    case WHEEL:
-      getWheel(game);
-      break;
-    case MARQUEE:
-      getMarquee(game);
-      break;
-    case VIDEO:
-      if(config->videos) {
-	getVideo(game);
-      }
-      break;
-    default:
-      ;
+void ImportScraper::runPasses(QList<GameEntry> &gameEntries,
+                              const QFileInfo &info, QString &, QString &) {
+    data = "";
+    textualFile = "";
+    screenshotFile = "";
+    coverFile = "";
+    wheelFile = "";
+    marqueeFile = "";
+    videoFile = "";
+    manualFile = "";
+    GameEntry game;
+    bool any = checkType(info.completeBaseName(), textual, textualFile);
+    any |= checkType(info.completeBaseName(), screenshots, screenshotFile);
+    any |= checkType(info.completeBaseName(), covers, coverFile);
+    any |= checkType(info.completeBaseName(), wheels, wheelFile);
+    any |= checkType(info.completeBaseName(), marquees, marqueeFile);
+    any |= checkType(info.completeBaseName(), textures, textureFile);
+    any |= checkType(info.completeBaseName(), videos, videoFile);
+    any |= checkType(info.completeBaseName(), manuals, manualFile);
+    if (any) {
+        game.title = info.completeBaseName();
+        game.platform = config->platform;
+        gameEntries.append(game);
     }
-  }
 }
 
-void ImportScraper::runPasses(QList<GameEntry> &gameEntries, const QFileInfo &info, QString &, QString &)
-{
-  data = "";
-  textualFile = "";
-  screenshotFile = "";
-  coverFile = "";
-  wheelFile = "";
-  marqueeFile = "";
-  videoFile = "";
-  GameEntry game;
-  bool textualFound = checkType(info.completeBaseName(), textual, textualFile);
-  bool screenshotFound = checkType(info.completeBaseName(), screenshots, screenshotFile);
-  bool coverFound = checkType(info.completeBaseName(), covers, coverFile);
-  bool wheelFound = checkType(info.completeBaseName(), wheels, wheelFile);
-  bool marqueeFound = checkType(info.completeBaseName(), marquees, marqueeFile);
-  bool videoFound = checkType(info.completeBaseName(), videos, videoFile);
-  if(textualFound || screenshotFound || coverFound || wheelFound || marqueeFound || videoFound) {
-    game.title = info.completeBaseName();
-    game.platform = config->platform;
-    gameEntries.append(game);
-  }
+QString ImportScraper::getCompareTitle(const QFileInfo &info) {
+    return info.completeBaseName();
 }
 
-QString ImportScraper::getCompareTitle(QFileInfo info)
-{
-  return info.completeBaseName();
-}
-
-void ImportScraper::getCover(GameEntry &game)
-{
-  if(!coverFile.isEmpty()) {
-    QFile f(coverFile);
-    if(f.open(QIODevice::ReadOnly)) {
-      game.coverData = f.readAll();
-      f.close();
+QByteArray ImportScraper::readFile(const QString &fn) {
+    QByteArray data = QByteArray();
+    if (!fn.isEmpty()) {
+        QFile f(fn);
+        if (f.open(QIODevice::ReadOnly)) {
+            data = f.readAll();
+            f.close();
+        }
     }
-  }
+    return data;
 }
 
-void ImportScraper::getScreenshot(GameEntry &game)
-{
-  if(!screenshotFile.isEmpty()) {
-    QFile f(screenshotFile);
-    if(f.open(QIODevice::ReadOnly)) {
-      game.screenshotData = f.readAll();
-      f.close();
+void ImportScraper::getCover(GameEntry &game) {
+    game.coverData = readFile(coverFile);
+}
+
+void ImportScraper::getScreenshot(GameEntry &game) {
+    game.screenshotData = readFile(screenshotFile);
+}
+
+void ImportScraper::getWheel(GameEntry &game) {
+    game.wheelData = readFile(wheelFile);
+}
+
+void ImportScraper::getMarquee(GameEntry &game) {
+    game.marqueeData = readFile(marqueeFile);
+}
+
+void ImportScraper::getTexture(GameEntry &game) {
+    game.textureData = readFile(textureFile);
+}
+
+void ImportScraper::getManual(GameEntry &game) {
+    game.manualData = readFile(manualFile);
+}
+
+void ImportScraper::getVideo(GameEntry &game) {
+    if (!videoFile.isEmpty()) {
+        QFile f(videoFile);
+        if (f.open(QIODevice::ReadOnly)) {
+            QFileInfo i(videoFile);
+            game.videoData = f.readAll();
+            game.videoFormat = i.suffix();
+            f.close();
+        }
     }
-  }
 }
 
-void ImportScraper::getWheel(GameEntry &game)
-{
-  if(!wheelFile.isEmpty()) {
-    QFile f(wheelFile);
-    if(f.open(QIODevice::ReadOnly)) {
-      game.wheelData = f.readAll();
-      f.close();
+void ImportScraper::getAges(GameEntry &game) {
+    if (isXml) {
+        game.ages = getElementText(agesPre);
+    } else {
+        QByteArray dataOrig = data;
+        AbstractScraper::getAges(game);
+        data = dataOrig;
     }
-  }
 }
 
-void ImportScraper::getMarquee(GameEntry &game)
-{
-  if(!marqueeFile.isEmpty()) {
-    QFile f(marqueeFile);
-    if(f.open(QIODevice::ReadOnly)) {
-      game.marqueeData = f.readAll();
-      f.close();
+void ImportScraper::getDescription(GameEntry &game) {
+    if (isXml) {
+        game.description = getElementText(descriptionPre);
+    } else {
+        QByteArray dataOrig = data;
+        AbstractScraper::getDescription(game);
+        data = dataOrig;
     }
-  }
 }
 
-void ImportScraper::getVideo(GameEntry &game)
-{
-  if(!videoFile.isEmpty()) {
-    QFile f(videoFile);
-    if(f.open(QIODevice::ReadOnly)) {
-      QFileInfo i(videoFile);
-      game.videoData = f.readAll();
-      game.videoFormat = i.suffix();
-      f.close();
+void ImportScraper::getDeveloper(GameEntry &game) {
+    if (isXml) {
+        game.developer = getElementText(developerPre);
+    } else {
+        QByteArray dataOrig = data;
+        AbstractScraper::getDeveloper(game);
+        data = dataOrig;
     }
-  }
 }
 
-void ImportScraper::getTitle(GameEntry &game)
-{
-  if(titlePre.isEmpty()) {
-    return;
-  }
-  for(const auto &nom: titlePre) {
-    if(!checkNom(nom)) {
-      return;
+void ImportScraper::getPlayers(GameEntry &game) {
+    if (isXml) {
+        game.players = getElementText(playersPre);
+    } else {
+        QByteArray dataOrig = data;
+        AbstractScraper::getPlayers(game);
+        data = dataOrig;
     }
-  }
-  for(const auto &nom: titlePre) {
-    nomNom(nom);
-  }
-  game.title = data.left(data.indexOf(titlePost.toUtf8())).simplified();
 }
 
-void ImportScraper::loadData()
-{
-  if(!textualFile.isEmpty()) {
-    QFile f(textualFile);
-    if(f.open(QIODevice::ReadOnly)) {
-      data = f.readAll();
-      f.close();
+void ImportScraper::getPublisher(GameEntry &game) {
+    if (isXml) {
+        game.publisher = getElementText(publisherPre);
+    } else {
+        QByteArray dataOrig = data;
+        AbstractScraper::getPublisher(game);
+        data = dataOrig;
     }
-  }
 }
 
-bool ImportScraper::loadDefinitions()
-{
-  // Check for textual resource file
-  QFile defFile;
-  if(QFile::exists(config->importFolder + "/definitions.dat")) {
-    defFile.setFileName(config->importFolder + "/definitions.dat");
-  } else {
-    defFile.setFileName(config->importFolder + "/../definitions.dat");
-  }
-  if(defFile.open(QIODevice::ReadOnly)) {
-    while(!defFile.atEnd()) {
-      QString line(defFile.readLine());
-      checkForTag(titlePre, titlePost, titleTag, line);
-      checkForTag(publisherPre, publisherPost, publisherTag, line);
-      checkForTag(developerPre, developerPost, developerTag, line);
-      checkForTag(playersPre, playersPost, playersTag, line);
-      checkForTag(agesPre, agesPost, agesTag, line);
-      checkForTag(ratingPre, ratingPost, ratingTag, line);
-      checkForTag(tagsPre, tagsPost, tagsTag, line);
-      checkForTag(releaseDatePre, releaseDatePost, releaseDateTag, line);
-      checkForTag(descriptionPre, descriptionPost, descriptionTag, line);
+void ImportScraper::getRating(GameEntry &game) {
+    if (ratingPre.isEmpty()) {
+        return;
     }
-    defFile.close();
-    return true;
-  }
-  return false;
-}
 
-void ImportScraper::checkForTag(QList<QString> &pre, QString &post, QString &tag, QString &line)
-{
-  if(line.indexOf(tag) != -1 && line.indexOf(tag) != 0) {
-    pre.append(line.left(line.indexOf(tag)));
-    post = line.right(line.length() - (line.indexOf(tag) + tag.length()));
-  }
-}
-
-bool ImportScraper::checkType(QString baseName, QList<QFileInfo> &infos, QString &inputFile)
-{
-  for(const auto &i: infos) {
-    if(i.completeBaseName() == baseName) {
-      inputFile = i.absoluteFilePath();
-      return true;
+    if (isXml) {
+        game.rating = getElementText(ratingPre);
+    } else {
+        QByteArray dataOrig = data;
+        for (const auto &nom : ratingPre) {
+            if (!checkNom(nom)) {
+                return;
+            }
+        }
+        for (const auto &nom : ratingPre) {
+            nomNom(nom);
+        }
+        game.rating = data.left(data.indexOf(ratingPost.toUtf8()));
+        data = dataOrig;
     }
-  }
-  return false;
+
+    // check for 0, 0.5, 1, 1.5, ... 5 (star rating)
+    QRegularExpression re("^[0-5](\\.5)?$");
+    QRegularExpressionMatch m = re.match(game.rating);
+    if (m.hasMatch()) {
+        double rating = game.rating.toDouble();
+        if (rating <= 5.0) {
+            game.rating = QString::number(rating / 5.0);
+        } else {
+            game.rating = "";
+        }
+        return;
+    }
+
+    // check for 0.0 ... 1.0 (decimal number)
+    // known limitation: to yield 0.5 this scale enter it as '.5' or '0.50'
+    bool toDoubleOk = false;
+    double rating = game.rating.toDouble(&toDoubleOk);
+    if (toDoubleOk && rating >= 0.0 && rating <= 1.0) {
+        game.rating = QString::number(rating);
+    } else {
+        game.rating = "";
+    }
+}
+
+void ImportScraper::getReleaseDate(GameEntry &game) {
+    if (isXml) {
+        game.releaseDate = getElementText(releaseDatePre);
+    } else {
+        QByteArray dataOrig = data;
+        AbstractScraper::getReleaseDate(game);
+        data = dataOrig;
+    }
+}
+
+void ImportScraper::getTags(GameEntry &game) {
+    if (isXml) {
+        game.tags = getElementText(tagsPre);
+    } else {
+        QByteArray dataOrig = data;
+        AbstractScraper::getTags(game);
+        data = dataOrig;
+    }
+}
+
+void ImportScraper::getTitle(GameEntry &game) {
+    if (titlePre.isEmpty()) {
+        return;
+    }
+    if (isXml) {
+        game.title = getElementText(titlePre);
+    } else {
+        QByteArray dataOrig = data;
+        for (const auto &nom : titlePre) {
+            if (!checkNom(nom)) {
+                return;
+            }
+        }
+        for (const auto &nom : titlePre) {
+            nomNom(nom);
+        }
+        game.title = data.left(data.indexOf(titlePost.toUtf8())).simplified();
+        data = dataOrig;
+    }
+}
+
+QString ImportScraper::getElementText(QStringList e) {
+    QString v;
+    if (!e.isEmpty()) {
+        QString elem = e.at(0);
+        QDomDocument doc;
+        doc.setContent(data);
+        QDomElement root = doc.documentElement();
+        QDomNode n = root.namedItem(elem);
+        if (!n.isNull()) {
+            v = n.toElement().text();
+        }
+    }
+    return v;
+}
+
+void ImportScraper::loadData() {
+    if (!textualFile.isEmpty()) {
+        QFile f(textualFile);
+        if (f.open(QIODevice::ReadOnly)) {
+            data = f.readAll();
+            f.close();
+        }
+    }
+}
+
+bool ImportScraper::loadDefinitions() {
+    // Check for textual resource file
+    QFile defFile;
+    if (QFile::exists(config->importFolder + "/definitions.dat")) {
+        defFile.setFileName(config->importFolder + "/definitions.dat");
+    } else {
+        defFile.setFileName(config->importFolder + "/../definitions.dat");
+    }
+    if (defFile.open(QIODevice::ReadOnly)) {
+        while (!defFile.atEnd()) {
+            QString line(defFile.readLine());
+            isXml |= checkForTag(titlePre, titlePost, titleTag, line);
+            isXml |=
+                checkForTag(publisherPre, publisherPost, publisherTag, line);
+            isXml |=
+                checkForTag(developerPre, developerPost, developerTag, line);
+            isXml |= checkForTag(playersPre, playersPost, playersTag, line);
+            isXml |= checkForTag(agesPre, agesPost, agesTag, line);
+            isXml |= checkForTag(ratingPre, ratingPost, ratingTag, line);
+            isXml |= checkForTag(tagsPre, tagsPost, tagsTag, line);
+            isXml |= checkForTag(releaseDatePre, releaseDatePost,
+                                 releaseDateTag, line);
+            isXml |= checkForTag(descriptionPre, descriptionPost,
+                                 descriptionTag, line);
+        }
+        defFile.close();
+        return true;
+    }
+    return false;
+}
+
+bool ImportScraper::checkForTag(QList<QString> &pre, QString &post,
+                                QString &tag, QString &line) {
+    bool isXml = false;
+    if (line.indexOf(tag) != -1 && line.indexOf(tag) != 0) {
+        QString preStr = line.left(line.indexOf(tag));
+        QString ttmp = preStr.trimmed();
+        isXml = ttmp.startsWith("<") && ttmp.endsWith(">");
+        if (isXml) {
+            pre.append(ttmp.replace("<", "").replace(">", ""));
+        } else {
+            pre.append(preStr);
+        }
+        post = line.right(line.length() - (line.indexOf(tag) + tag.length()));
+    }
+    return isXml;
+}
+
+bool ImportScraper::checkType(QString baseName, QList<QFileInfo> &infos,
+                              QString &inputFile) {
+    for (const auto &i : infos) {
+        if (i.completeBaseName() == baseName) {
+            inputFile = i.absoluteFilePath();
+            return true;
+        }
+    }
+    return false;
 }

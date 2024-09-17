@@ -26,42 +26,41 @@
 #ifndef MOBYGAMES_H
 #define MOBYGAMES_H
 
+#include "abstractscraper.h"
+
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "abstractscraper.h"
-
-class MobyGames : public AbstractScraper
-{
-  Q_OBJECT
+class MobyGames : public AbstractScraper {
+    Q_OBJECT
 
 public:
-  MobyGames(Settings *config, QSharedPointer<NetManager> manager);
+    MobyGames(Settings *config, QSharedPointer<NetManager> manager);
 
 private:
-  QTimer limitTimer;
-  QEventLoop limiter;
-  void getSearchResults(QList<GameEntry> &gameEntries,
-			QString searchName, QString platform) override;
-  void getGameData(GameEntry &game) override;
-  void getReleaseDate(GameEntry &game) override;
-  void getPlayers(GameEntry &game) override;
-  void getTags(GameEntry &game) override;
-  void getDeveloper(GameEntry &game) override;
-  void getPublisher(GameEntry &game) override;
-  void getDescription(GameEntry &game) override;
-  void getAges(GameEntry &game) override;
-  void getRating(GameEntry &game) override;
-  void getCover(GameEntry &game) override;
-  void getScreenshot(GameEntry &game) override;
+    QTimer limitTimer;
+    QEventLoop limiter;
+    void getSearchResults(QList<GameEntry> &gameEntries, QString searchName,
+                          QString platform) override;
+    void getGameData(GameEntry &game) override;
+    void getReleaseDate(GameEntry &game) override;
+    void getPlayers(GameEntry &game) override;
+    void getTags(GameEntry &game) override;
+    void getDeveloper(GameEntry &game) override;
+    void getPublisher(GameEntry &game) override;
+    void getDescription(GameEntry &game) override;
+    void getAges(GameEntry &game) override;
+    void getRating(GameEntry &game) override;
+    void getCover(GameEntry &game) override;
+    void getScreenshot(GameEntry &game) override;
 
-  QString getPlatformId(const QString platform) override;
+    int getPlatformId(const QString platform) override;
+    QString getRegionShort(const QString &region);
+    void setupRegionMap();
 
-  QString getRegionShort(const QString &region);
-
-  QJsonDocument jsonDoc;
-  QJsonObject jsonObj;
-
+    QJsonDocument jsonDoc;
+    QJsonObject jsonObj;
+    QMap<QString, QString> regionMap;
 };
 
 #endif // MOBYGAMES_H

@@ -26,52 +26,67 @@
 #ifndef SCREENSCRAPER_H
 #define SCREENSCRAPER_H
 
+#include "abstractscraper.h"
+
+#include <QEventLoop>
 #include <QJsonObject>
 #include <QTimer>
-#include <QEventLoop>
-
-#include "abstractscraper.h"
 
 constexpr int REGION = 0;
 constexpr int LANGUE = 1;
 constexpr int NONE = 42;
 
-class ScreenScraper : public AbstractScraper
-{
-  Q_OBJECT
+class ScreenScraper : public AbstractScraper {
+    Q_OBJECT
 
 public:
-  ScreenScraper(Settings *config, QSharedPointer<NetManager> manager);
+    ScreenScraper(Settings *config, QSharedPointer<NetManager> manager);
 
 private:
-  QTimer limitTimer;
-  QEventLoop limiter;
-  QList<QString> getSearchNames(const QFileInfo &info) override;
-  void getSearchResults(QList<GameEntry> &gameEntries, QString searchName, QString) override;
-  void getGameData(GameEntry &game) override;
-  void getReleaseDate(GameEntry &game) override;
-  void getDeveloper(GameEntry &game) override;
-  void getPublisher(GameEntry &game) override;
-  void getPlayers(GameEntry &game) override;
-  void getAges(GameEntry &game) override;
-  void getRating(GameEntry &game) override;
-  void getDescription(GameEntry &game) override;
-  void getTags(GameEntry &game) override;
+    QTimer limitTimer;
+    QEventLoop limiter;
+    QList<QString> getSearchNames(const QFileInfo &info,
+                                  QString &debug) override;
+    void getSearchResults(QList<GameEntry> &gameEntries, QString searchName,
+                          QString) override;
+    void getGameData(GameEntry &game) override;
+    void getReleaseDate(GameEntry &game) override;
+    void getDeveloper(GameEntry &game) override;
+    void getPublisher(GameEntry &game) override;
+    void getPlayers(GameEntry &game) override;
+    void getAges(GameEntry &game) override;
+    void getRating(GameEntry &game) override;
+    void getDescription(GameEntry &game) override;
+    void getTags(GameEntry &game) override;
 
-  void getCover(GameEntry &game) override;
-  void getScreenshot(GameEntry &game) override;
-  void getWheel(GameEntry &game) override;
-  void getMarquee(GameEntry &game) override;
-  void getVideo(GameEntry &game) override;
+    void getCover(GameEntry &game) override;
+    void getScreenshot(GameEntry &game) override;
+    void getWheel(GameEntry &game) override;
+    void getMarquee(GameEntry &game) override;
+    void getTexture(GameEntry &game) override;
+    void getVideo(GameEntry &game) override;
+    void getManual(GameEntry &game) override;
 
-  QString getJsonText(QJsonArray array, int attr, QList<QString> types = QList<QString>());
+    QString getJsonText(QJsonArray array, int attr,
+                        QList<QString> types = QList<QString>());
+    QByteArray downloadMedia(const QString &url);
+    void downloadBinary(const QString &url, const QString &type,
+                        GameEntry &game);
+    QString getUrlOrTextPropertyValue(const QJsonObject &jsonVal,
+                                      const QString &key,
+                                      const QString &matchValue);
+    QString getLocalizedValue(const QJsonArray &jsonArr,
+                              const QList<QString> &prios, const QString &key,
+                              const QList<QString> &types);
+    QString getPropertyValue(const QJsonArray &jsonArr,
+                             const QList<QString> &locPrios,
+                             const QString &locationKey,
+                             const QString &type = "");
+    int getPlatformId(const QString platform) override;
 
-  QString getPlatformId(const QString platform) override;
-
-  QString region;
-  QString lang;
-  QJsonObject jsonObj;
-
+    QString region;
+    QString lang;
+    QJsonObject jsonObj;
 };
 
 #endif // SCREENSCRAPER_H

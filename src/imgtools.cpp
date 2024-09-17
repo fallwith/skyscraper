@@ -25,41 +25,40 @@
 
 #include "imgtools.h"
 
-QImage ImgTools::cropToFit(const QImage &image, bool cropBlack)
-{
-  int left = image.width();
-  int right = 0;
-  int top = 0;
-  int bottom = image.height();
+QImage ImgTools::cropToFit(const QImage &image, bool cropBlack) {
+    int left = image.width();
+    int right = 0;
+    int top = 0;
+    int bottom = image.height();
 
-  bool pixelsFound = false;
+    bool pixelsFound = false;
 
-  // Find lefmost edge
-  for(int y = 0; y < image.height(); ++y) {
-    QRgb *scanline = (QRgb *)image.scanLine(y);
-    for(int x = 0; x < image.width(); ++x) {
-      if(qAlpha(scanline[x]) > 0 &&
-	 (cropBlack?qRed(scanline[x]) > 0 ||
-	  qGreen(scanline[x]) > 0 ||
-	  qBlue(scanline[x]) > 0:true)) {
-	pixelsFound = true;
-	if(left > x) {
-	  left = x;
-	}
-	if(right < x) {
-	  right = x + 1;
-	}
-	if(top == 0) {
-	  top = y;
-	}
-	bottom = y + 1;
-      }
+    // Find lefmost edge
+    for (int y = 0; y < image.height(); ++y) {
+        QRgb *scanline = (QRgb *)image.scanLine(y);
+        for (int x = 0; x < image.width(); ++x) {
+            if (qAlpha(scanline[x]) > 0 &&
+                (cropBlack ? qRed(scanline[x]) > 0 || qGreen(scanline[x]) > 0 ||
+                                 qBlue(scanline[x]) > 0
+                           : true)) {
+                pixelsFound = true;
+                if (left > x) {
+                    left = x;
+                }
+                if (right < x) {
+                    right = x + 1;
+                }
+                if (top == 0) {
+                    top = y;
+                }
+                bottom = y + 1;
+            }
+        }
     }
-  }
-  // Only crop if non-alpha, non-black pixels are found
-  if(pixelsFound) {
-    QImage cropped = image.copy(left, top, right - left, bottom - top);
-    return cropped;
-  }
-  return image;
+    // Only crop if non-alpha, non-black pixels are found
+    if (pixelsFound) {
+        QImage cropped = image.copy(left, top, right - left, bottom - top);
+        return cropped;
+    }
+    return image;
 }

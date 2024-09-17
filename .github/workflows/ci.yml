@@ -1,0 +1,16 @@
+name: Tests
+
+on: [push]
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@master
+      - name: Install deps
+        run: bash ./supplementary/workflows/deps
+      - name: Build
+        run: bash ./supplementary/workflows/install
+      - name: Test
+        run: bash ./supplementary/workflows/test

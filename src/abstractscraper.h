@@ -26,109 +26,155 @@
 #ifndef ABSTRACTSCRAPER_H
 #define ABSTRACTSCRAPER_H
 
+#include "gameentry.h"
 #include "netcomm.h"
 #include "netmanager.h"
-#include "gameentry.h"
 #include "settings.h"
 
-#include <QImage>
 #include <QEventLoop>
 #include <QFileInfo>
+#include <QImage>
+#include <QList>
 #include <QSettings>
 
-class AbstractScraper : public QObject
-{
-  Q_OBJECT
+class AbstractScraper : public QObject {
+    Q_OBJECT
 
 public:
-  AbstractScraper(Settings *config,
-		  QSharedPointer<NetManager> manager);
-  virtual ~AbstractScraper();
-  virtual void getGameData(GameEntry &game);
-  virtual QList<QString> getSearchNames(const QFileInfo &info);
-  virtual QString getCompareTitle(QFileInfo info);
-  virtual void runPasses(QList<GameEntry> &gameEntries, const QFileInfo &info, QString &output, QString &debug);
+    enum MatchType { ABSTRACT, MATCH_ONE, MATCH_MANY };
 
-  //void setConfig(Settings *config);
+    AbstractScraper(Settings *config, QSharedPointer<NetManager> manager,
+                    MatchType type = ABSTRACT);
+    virtual ~AbstractScraper();
+    virtual void getGameData(GameEntry &game);
+    virtual QList<QString> getSearchNames(const QFileInfo &info,
+                                          QString &debug);
+    virtual QString getCompareTitle(const QFileInfo &info);
+    virtual void runPasses(QList<GameEntry> &gameEntries, const QFileInfo &info,
+                           QString &output, QString &debug);
 
-  int reqRemaining = -1;
+    int reqRemaining = -1;
+    MatchType getType() const { return type; };
+
+#ifdef TESTING
+    QList<QString> getRegionPrios() { return regionPrios; }
+    void detectRegionFromFilename(const QFileInfo &info);
+#endif
 
 protected:
-  Settings *config;
+    Settings *config;
 
-  virtual void getSearchResults(QList<GameEntry> &gameEntries, QString searchName,
-				QString platform);
-  virtual void getDescription(GameEntry &game);
-  virtual void getDeveloper(GameEntry &game);
-  virtual void getPublisher(GameEntry &game);
-  virtual void getPlayers(GameEntry &game);
-  virtual void getAges(GameEntry &game);
-  virtual void getTags(GameEntry &game);
-  virtual void getRating(GameEntry &game);
-  virtual void getReleaseDate(GameEntry &game);
-  virtual void getCover(GameEntry &game);
-  virtual void getScreenshot(GameEntry &game);
-  virtual void getWheel(GameEntry &game);
-  virtual void getMarquee(GameEntry &game);
-  virtual void getVideo(GameEntry &game);
+    virtual void getSearchResults(QList<GameEntry> &gameEntries,
+                                  QString searchName, QString platform);
+    virtual void populateGameEntry(GameEntry &game);
+    virtual void getDescription(GameEntry &game);
+    virtual void getDeveloper(GameEntry &game);
+    virtual void getPublisher(GameEntry &game);
+    virtual void getPlayers(GameEntry &game);
+    virtual void getAges(GameEntry &game);
+    virtual void getTags(GameEntry &game);
+    virtual void getRating(GameEntry &game);
+    virtual void getReleaseDate(GameEntry &game);
+    virtual void getCover(GameEntry &game);
+    virtual void getScreenshot(GameEntry &game);
+    virtual void getWheel(GameEntry &game);
+    virtual void getMarquee(GameEntry &game);
+    virtual void getTexture(GameEntry &game);
+    virtual void getTitle(GameEntry &);
+    virtual void getVideo(GameEntry &game);
+    virtual void getManual(GameEntry &game) { (void)game; };
 
-  virtual void nomNom(const QString nom, bool including = true);
+    virtual void nomNom(const QString nom, bool including = true);
+    bool checkNom(const QString nom);
 
-  virtual bool platformMatch(QString found, QString platform);
-  virtual QString getPlatformId(const QString);
+    virtual bool platformMatch(QString found, QString platform);
+    virtual int getPlatformId(const QString);
 
-  bool checkNom(const QString nom);
+    QString lookupSearchName(const QFileInfo &info, const QString &baseName,
+                             QString &debug);
 
-  QList<int> fetchOrder;
+    MatchType type = ABSTRACT;
 
-  QByteArray data;
+    QList<int> fetchOrder;
 
-  QString baseUrl;
-  QString searchUrlPre;
-  QString searchUrlPost;
+    QByteArray data;
 
-  QString searchResultPre;
+    QString baseUrl;
+    QString searchUrlPre;
+    QString searchUrlPost;
 
-  QList<QString> urlPre;
-  QString urlPost;
-  QList<QString> titlePre;
-  QString titlePost;
-  QList<QString> platformPre;
-  QString platformPost;
-  QList<QString> descriptionPre;
-  QString descriptionPost;
-  QList<QString> developerPre;
-  QString developerPost;
-  QList<QString> publisherPre;
-  QString publisherPost;
-  QList<QString> playersPre;
-  QString playersPost;
-  QList<QString> agesPre;
-  QString agesPost;
-  QList<QString> tagsPre;
-  QString tagsPost;
-  QList<QString> ratingPre;
-  QString ratingPost;
-  QList<QString> releaseDatePre;
-  QString releaseDatePost;
-  QList<QString> coverPre;
-  QString coverPost;
-  QList<QString> screenshotPre;
-  QString screenshotPost;
-  QString screenshotCounter;
-  QList<QString> wheelPre;
-  QString wheelPost;
-  QList<QString> marqueePre;
-  QString marqueePost;
-  QList<QString> videoPre;
-  QString videoPost;
+    QString searchResultPre;
 
-  // This is used when file names have a region in them. The original regionPrios is in Settings
-  QList<QString> regionPrios;
+    QList<QString> urlPre;
+    QString urlPost;
+    QList<QString> titlePre;
+    QString titlePost;
+    QList<QString> platformPre;
+    QString platformPost;
+    QList<QString> descriptionPre;
+    QString descriptionPost;
+    QList<QString> developerPre;
+    QString developerPost;
+    QList<QString> publisherPre;
+    QString publisherPost;
+    QList<QString> playersPre;
+    QString playersPost;
+    QList<QString> agesPre;
+    QString agesPost;
+    QList<QString> tagsPre;
+    QString tagsPost;
+    QList<QString> ratingPre;
+    QString ratingPost;
+    QList<QString> releaseDatePre;
+    QString releaseDatePost;
+    QList<QString> coverPre;
+    QString coverPost;
+    QList<QString> screenshotPre;
+    QString screenshotPost;
+    QString screenshotCounter;
+    QList<QString> wheelPre;
+    QString wheelPost;
+    QList<QString> marqueePre;
+    QString marqueePost;
+    QList<QString> texturePre;
+    QString texturePost;
+    QList<QString> videoPre;
+    QString videoPost;
 
-  NetComm *netComm;
-  QEventLoop q; // Event loop for use when waiting for data from NetComm.
+    // This is used when file names have a region in them. The original
+    // regionPrios is in Settings
+    QList<QString> regionPrios;
 
+    NetComm *netComm;
+    QEventLoop q; // Event loop for use when waiting for data from NetComm.
+
+private:
+    QString lookupArcadeTitle(const QString &baseName);
+#ifndef TESTING
+    void detectRegionFromFilename(const QFileInfo &info);
+#endif
+    const inline QList<QPair<QString, QString>> regionMap() {
+        // use list of pairs to maintain order
+        return QList<QPair<QString, QString>>{
+            QPair<QString, QString>("europe|(e)", "eu"),
+            QPair<QString, QString>("usa|(u)", "us"),
+            QPair<QString, QString>("world", "wor"),
+            QPair<QString, QString>("japan|(j)", "jp"),
+            QPair<QString, QString>("brazil", "br"),
+            QPair<QString, QString>("korea", "kr"),
+            QPair<QString, QString>("taiwan", "tw"),
+            QPair<QString, QString>("france", "fr"),
+            QPair<QString, QString>("germany", "de"),
+            QPair<QString, QString>("italy", "it"),
+            QPair<QString, QString>("spain", "sp"),
+            QPair<QString, QString>("china", "cn"),
+            QPair<QString, QString>("australia", "au"),
+            QPair<QString, QString>("sweden", "se"),
+            QPair<QString, QString>("canada", "ca"),
+            QPair<QString, QString>("netherlands", "nl"),
+            QPair<QString, QString>("denmark", "dk"),
+            QPair<QString, QString>("asia", "asi")};
+    }
 };
 
 #endif // ABSTRACTSCRAPER_H

@@ -23,46 +23,41 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
  */
 
-#include <cmath>
-#include <QPainter>
-
 #include "fxbrightness.h"
 
-FxBrightness::FxBrightness()
-{
-}
+#include <QPainter>
+#include <cmath>
 
-QImage FxBrightness::applyEffect(const QImage &src, const Layer &layer)
-{
-  QImage canvas = src;
+FxBrightness::FxBrightness() {}
 
-  int brightness = layer.delta;
-  int index[256];
-  for(int a = 0; a < 256; ++a) {
-    index[a] = truncate(a + brightness);
-  }
+QImage FxBrightness::applyEffect(const QImage &src, const Layer &layer) {
+    QImage canvas = src;
 
-  for(int y = 0; y < canvas.height(); ++y) {
-    QRgb* line = (QRgb *)canvas.scanLine(y);
-    for(int x = 0; x < canvas.width(); ++x) {
-      
-      line[x] = qPremultiply(qRgba(index[qRed(line[x])],
-				   index[qGreen(line[x])],
-				   index[qBlue(line[x])],
-				   qAlpha(line[x])));
+    int brightness = layer.delta;
+    int index[256];
+    for (int a = 0; a < 256; ++a) {
+        index[a] = truncate(a + brightness);
     }
-  }
 
-  return canvas;
+    for (int y = 0; y < canvas.height(); ++y) {
+        QRgb *line = (QRgb *)canvas.scanLine(y);
+        for (int x = 0; x < canvas.width(); ++x) {
+
+            line[x] =
+                qPremultiply(qRgba(index[qRed(line[x])], index[qGreen(line[x])],
+                                   index[qBlue(line[x])], qAlpha(line[x])));
+        }
+    }
+
+    return canvas;
 }
 
-int FxBrightness::truncate(int value)
-{
-  if(value > 255) {
-    value = 255;
-  }
-  if(value < 0) {
-    value = 0;
-  }
-  return value;
+int FxBrightness::truncate(int value) {
+    if (value > 255) {
+        value = 255;
+    }
+    if (value < 0) {
+        value = 0;
+    }
+    return value;
 }

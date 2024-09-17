@@ -26,27 +26,28 @@
 #ifndef FXSHADOW_H
 #define FXSHADOW_H
 
+#include "gameentry.h"
+#include "layer.h"
+#include "settings.h"
+
 #include <QImage>
 #include <QXmlStreamReader>
 
-#include "settings.h"
-#include "gameentry.h"
-#include "layer.h"
-
-class FxShadow : public QObject
-{
-  Q_OBJECT
+class FxShadow : public QObject {
+    Q_OBJECT
 
 public:
-  FxShadow();
-  QImage applyEffect(const QImage &src, const Layer &layer);
+    FxShadow();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 
 private:
-  QVector<double> getGaussBoxes(double sigma, double n);
-  void boxBlur(QRgb *buffer1, QRgb *buffer2, int width, int height, int radius);
-  void boxBlurHorizontal(QRgb *buffer1, QRgb *buffer2, int width, int height, int radius);
-  void boxBlurTotal(QRgb *buffer1, QRgb *buffer2, int width, int height, int radius);
-
+    QVector<double> getGaussBoxes(double sigma, double n);
+    void boxBlur(QRgb *buffer1, QRgb *buffer2, int width, int height,
+                 int radius);
+    void boxBlurHorizontal(QRgb *buffer1, QRgb *buffer2, int width, int height,
+                           int radius);
+    void boxBlurTotal(QRgb *buffer1, QRgb *buffer2, int width, int height,
+                      int radius);
 };
 
 #endif // FXSHADOW_H

@@ -1,0 +1,5 @@
+Makefile
+*.o
+settings_test
+peas.json
+platforms_idmap.csv

@@ -24,282 +24,412 @@
  */
 
 #include "emulationstation.h"
-#include "xmlreader.h"
-#include "strtools.h"
+
+#include "gameentry.h"
 #include "platform.h"
+#include "strtools.h"
+#include "xmlreader.h"
 
+#include <QDebug>
 #include <QDir>
-#include <QRegularExpression>
+#include <QStringBuilder>
 
-EmulationStation::EmulationStation()
-{
+EmulationStation::EmulationStation() {}
+
+bool EmulationStation::loadOldGameList(const QString &gameListFileString) {
+    // Load old game list entries so we can preserve metadata later when
+    // assembling xml
+    XmlReader gameListReader;
+    if (gameListReader.setFile(gameListFileString)) {
+        oldEntries = gameListReader.getEntries(config->inputFolder,
+                                               extraGamelistTags(true));
+        return true;
+    }
+    return false;
 }
 
-bool EmulationStation::loadOldGameList(const QString &gameListFileString)
-{
-  // Load old game list entries so we can preserve metadata later when assembling xml
-  XmlReader gameListReader;
-  if(gameListReader.setFile(gameListFileString)) {
-    oldEntries = gameListReader.getEntries(config->inputFolder);
+QStringList EmulationStation::extraGamelistTags(bool isFolder) {
+    (void)isFolder;
+    GameEntry g;
+    return g.extraTagNames(GameEntry::Format::RETROPIE);
+}
+
+bool EmulationStation::skipExisting(QList<GameEntry> &gameEntries,
+                                    QSharedPointer<Queue> queue) {
+    gameEntries = oldEntries;
+
+    printf("Resolving missing entries...");
+    int dots = 0;
+    for (int a = 0; a < gameEntries.length(); ++a) {
+        dots++;
+        if (dots % 100 == 0) {
+            printf(".");
+            fflush(stdout);
+        }
+        QFileInfo current(gameEntries.at(a).path);
+        for (int b = 0; b < queue->length(); ++b) {
+            if (current.isFile()) {
+                if (current.fileName() == queue->at(b).fileName()) {
+                    queue->removeAt(b);
+                    // We assume filename is unique, so break after getting
+                    // first hit
+                    break;
+                }
+            } else if (current.isDir()) {
+                // Use current.canonicalFilePath here since it is already a
+                // path. Otherwise it will use the parent folder
+                if (current.canonicalFilePath() ==
+                    queue->at(b).canonicalPath()) {
+                    queue->removeAt(b);
+                    // We assume filename is unique, so break after getting
+                    // first hit
+                    break;
+                }
+            }
+        }
+    }
     return true;
-  }
-
-  return false;
 }
 
-bool EmulationStation::skipExisting(QList<GameEntry> &gameEntries, QSharedPointer<Queue> queue) 
-{
-  gameEntries = oldEntries;
-
-  printf("Resolving missing entries...");
-  int dots = 0;
-  for(int a = 0; a < gameEntries.length(); ++a) {
-    dots++;
-    if(dots % 100 == 0) {
-      printf(".");
-      fflush(stdout);
+void EmulationStation::preserveFromOld(GameEntry &entry) {
+    for (const auto &oldEntry : oldEntries) {
+        if (entry.path == oldEntry.path) {
+            for (const auto &t : extraGamelistTags(entry.isFolder)) {
+                if (entry.getEsExtra(t).isEmpty()) {
+                    entry.setEsExtra(t, oldEntry.getEsExtra(t));
+                }
+            }
+            if (entry.developer.isEmpty() || entry.isFolder) {
+                entry.developer = oldEntry.developer;
+            }
+            if (entry.publisher.isEmpty() || entry.isFolder) {
+                entry.publisher = oldEntry.publisher;
+            }
+            if (entry.players.isEmpty() || entry.isFolder) {
+                entry.players = oldEntry.players;
+            }
+            if (entry.description.isEmpty() || entry.isFolder) {
+                entry.description = oldEntry.description;
+            }
+            if (entry.rating.isEmpty() || entry.isFolder) {
+                entry.rating = oldEntry.rating;
+            }
+            if (entry.releaseDate.isEmpty() || entry.isFolder) {
+                entry.releaseDate = oldEntry.releaseDate;
+            }
+            if (entry.tags.isEmpty() || entry.isFolder) {
+                entry.tags = oldEntry.tags;
+            }
+            if (entry.isFolder) {
+                entry.title = oldEntry.title;
+                entry.coverFile = oldEntry.coverFile;
+                entry.screenshotFile = oldEntry.screenshotFile;
+                entry.wheelFile = oldEntry.wheelFile;
+                entry.marqueeFile = oldEntry.marqueeFile;
+                entry.textureFile = oldEntry.textureFile;
+                entry.videoFile = oldEntry.videoFile;
+                // entry.manualFile on type folder does not make sense
+            }
+            break;
+        }
     }
-    QFileInfo current(gameEntries.at(a).path);
-    for(int b = 0; b < queue->length(); ++b) {
-      if(current.isFile()) {
-	if(current.fileName() == queue->at(b).fileName()) {
-	  queue->removeAt(b);
-	  // We assume filename is unique, so break after getting first hit
-	  break;
-	}
-      } else if(current.isDir()) {
-	// Use current.absoluteFilePath here since it is already a path. Otherwise it will use
-	// the parent folder
-	if(current.absoluteFilePath() == queue->at(b).absolutePath()) {
-	  queue->removeAt(b);
-	  // We assume filename is unique, so break after getting first hit
-	  break;
-	}
-      }
-    }
-  }
-  return true;
 }
 
-void EmulationStation::preserveFromOld(GameEntry &entry)
-{
-  for(const auto &oldEntry: oldEntries) {
-    QString oldFileName = oldEntry.path.mid(oldEntry.path.lastIndexOf("/"), oldEntry.path.length());
-    QString fileName = entry.path.mid(entry.path.lastIndexOf("/"), entry.path.length());
-    if(oldFileName == fileName) {
-      if(entry.eSFavorite.isEmpty())
-	entry.eSFavorite = oldEntry.eSFavorite;
-      if(entry.eSHidden.isEmpty())
-	entry.eSHidden = oldEntry.eSHidden;
-      if(entry.eSPlayCount.isEmpty())
-	entry.eSPlayCount = oldEntry.eSPlayCount;
-      if(entry.eSLastPlayed.isEmpty())
-	entry.eSLastPlayed = oldEntry.eSLastPlayed;
-      if(entry.eSKidGame.isEmpty())
-	entry.eSKidGame = oldEntry.eSKidGame;
-      if(entry.eSSortName.isEmpty())
-	entry.eSSortName = oldEntry.eSSortName;
-      if(entry.developer.isEmpty())
-	entry.developer = oldEntry.developer;
-      if(entry.publisher.isEmpty())
-	entry.publisher = oldEntry.publisher;
-      if(entry.players.isEmpty())
-	entry.players = oldEntry.players;
-      if(entry.description.isEmpty())
-	entry.description = oldEntry.description;
-      if(entry.rating.isEmpty())
-	entry.rating = oldEntry.rating;
-      if(entry.releaseDate.isEmpty())
-	entry.releaseDate = oldEntry.releaseDate;
-      if(entry.tags.isEmpty())
-	entry.tags = oldEntry.tags;
-      break;
+bool EmulationStation::existingInGamelist(GameEntry &entry) {
+    for (const auto &oldEntry : oldEntries) {
+        if (entry.path == oldEntry.path) {
+            return true;
+        }
     }
-  }
+    return false;
 }
 
-void EmulationStation::assembleList(QString &finalOutput, QList<GameEntry> &gameEntries)
-{
-  int dots = 0;
-  // Always make dotMod at least 1 or it will give "floating point exception" when modulo
-  int dotMod = gameEntries.length() * 0.1 + 1;
-  if(dotMod == 0)
-    dotMod = 1;
-  finalOutput.append("<?xml version=\"1.0\"?>\n<gameList>\n");
-  for(auto &entry: gameEntries) {
-    if(dots % dotMod == 0) {
-      printf(".");
-      fflush(stdout);
-    }
-    dots++;
-
-    QString entryType = "game";
-
-    QFileInfo entryInfo(entry.path);
-    if(entryInfo.isFile() && config->platform != "daphne") {
-      // Check if game is in subfolder. If so, change entry to <folder> type.
-      QString entryAbsolutePath = entryInfo.absolutePath();
-      // Check if path is exactly one subfolder beneath root platform folder (has one more '/')
-      if(entryAbsolutePath.count("/") == config->inputFolder.count("/") + 1) {
-	QString extensions = Platform::getFormats(config->platform,
-						  config->extensions,
-						  config->addExtensions);
-	// Check if the platform has both cue and bin extensions. Remove bin if it does to avoid count() below to be 2
-	// I thought about removing bin extensions entirely from platform.cpp, but I assume I've added them per user request at some point.
-	if(extensions.contains("*.cue") &&
-	   extensions.contains("*.bin")) {
-	  extensions.replace("*.bin", "");
-	  extensions = extensions.simplified();
-	}
-	// Check is subfolder has more roms than one, in which case we stick with <game>
-	if(QDir(entryAbsolutePath, extensions).count() == 1) {
-	  entryType = "folder";
-	  entry.path = entryAbsolutePath;
-	}
-      }
-    } else if(entryInfo.isDir()) {
-      entryType = "folder";
+void EmulationStation::assembleList(QString &finalOutput,
+                                    QList<GameEntry> &gameEntries) {
+    QString extensions = platformFileExtensions();
+    // Check if the platform has both cue and bin extensions. Remove
+    // bin if it does to avoid count() below to be 2. I thought
+    // about removing bin extensions entirely from platform.cpp, but
+    // I assume I've added them per user request at some point.
+    bool cueSuffix = false;
+    if (extensions.contains("*.cue")) {
+        cueSuffix = true;
+        if (extensions.contains("*.bin")) {
+            extensions.replace("*.bin", "");
+            extensions = extensions.simplified();
+        }
     }
 
-    // Preserve certain data from old game list entry, but only for empty data
-    preserveFromOld(entry);
+    QList<GameEntry> added;
+    QDir inputDir = QDir(config->inputFolder);
 
-    if(config->platform == "daphne") {
-      entry.path.replace("daphne/roms/", "daphne/").replace(".zip", ".daphne");
-      entryType = "game";
-    }
-    if(config->relativePaths) {
-      entry.path.replace(config->inputFolder, ".");
+    for (auto &entry : gameEntries) {
+        if (config->platform == "daphne") {
+            // 'daphne/roms/yadda_yadda.zip' -> 'daphne/yadda_yadda.daphne'
+            entry.path.replace("daphne/roms/", "daphne/")
+                .replace(".zip", ".daphne");
+            continue;
+        }
+        if (config->platform == "scummvm") {
+            // entry.path is file folder on fs with valid extension -> keep as
+            // game entry
+            // RetroPie/roms/scummvm/blarf.svm/ -> as <game/>
+            QFileInfo entryInfo(entry.path);
+            if (entryInfo.isDir() &&
+                extensions.contains("*." % entryInfo.suffix().toLower())) {
+                qDebug()
+                    << entry.path
+                    << "marked as <game/> albeit being a filesystem folder";
+                continue;
+            }
+        }
+        QFileInfo entryInfo(entry.path);
+        // always use absolute file path to ROM
+        entry.path = entryInfo.absoluteFilePath();
+
+        // Check if path is exactly one subfolder beneath root platform
+        // folder (has one more '/') and uses *.cue suffix
+        QString entryDir = entryInfo.absolutePath();
+        if (cueSuffix &&
+            entryDir.count("/") == config->inputFolder.count("/") + 1) {
+            // Check if subfolder has exactly one ROM, in which case we
+            // use <folder>
+            if (QDir(entryDir, extensions).count() == 1) {
+                entry.isFolder = true;
+                entry.path = entryDir;
+            }
+        }
+
+        // inputDir is absolute (cf. Skyscraper::run())
+        QString subPath = inputDir.relativeFilePath(entryDir);
+        if (subPath != ".") {
+            // <folder> element(s) are needed
+            addFolder(config->inputFolder, subPath, added);
+        }
     }
 
-    finalOutput.append("  <" + entryType + ">\n");
-    finalOutput.append("    <path>" + StrTools::xmlEscape(entry.path) + "</path>\n");
-    finalOutput.append("    <name>" + StrTools::xmlEscape(entry.title) + "</name>\n");
-    if(entry.coverFile.isEmpty()) {
-      finalOutput.append("    <thumbnail />\n");
-    } else {
-      // The replace here IS supposed to be 'inputFolder' and not 'mediaFolder' because we only want the path to be relative if '-o' hasn't been set. So this will only make it relative if the path is equal to inputFolder which is what we want.
-      finalOutput.append("    <thumbnail>" + (config->relativePaths?StrTools::xmlEscape(entry.coverFile).replace(config->inputFolder, "."):StrTools::xmlEscape(entry.coverFile)) + "</thumbnail>\n");
+    gameEntries.append(added);
+
+    int dots = -1;
+    int dotMod = 1 + gameEntries.length() * 0.1;
+
+    finalOutput.append("<?xml version=\"1.0\"?>\n");
+    finalOutput.append("<gameList>\n");
+
+    for (auto &entry : gameEntries) {
+        if (++dots % dotMod == 0) {
+            printf(".");
+            fflush(stdout);
+        }
+
+        if (entry.isFolder && !config->addFolders &&
+            !existingInGamelist(entry)) {
+            qDebug() << "addFolders is false, directory not added (but may be "
+                        "preserved): "
+                     << entry.path;
+            continue;
+        }
+
+        preserveFromOld(entry);
+
+        if (config->relativePaths) {
+            entry.path.replace(config->inputFolder, ".");
+        }
+        finalOutput.append(createXml(entry));
     }
-    if(entry.screenshotFile.isEmpty()) {
-      finalOutput.append("    <image />\n");
-    } else {
-      finalOutput.append("    <image>" + (config->relativePaths?StrTools::xmlEscape(entry.screenshotFile).replace(config->inputFolder, "."):StrTools::xmlEscape(entry.screenshotFile)) + "</image>\n");
-    }
-    if(entry.marqueeFile.isEmpty()) {
-      finalOutput.append("    <marquee />\n");
-    } else {
-      finalOutput.append("    <marquee>" + (config->relativePaths?StrTools::xmlEscape(entry.marqueeFile).replace(config->inputFolder, "."):StrTools::xmlEscape(entry.marqueeFile)) + "</marquee>\n");
-    }
-    if(entry.videoFormat.isEmpty() || !config->videos) {
-      finalOutput.append("    <video />\n");
-    } else {
-      finalOutput.append("    <video>" + (config->relativePaths?StrTools::xmlEscape(entry.videoFile).replace(config->inputFolder, "."):StrTools::xmlEscape(entry.videoFile)) + "</video>\n");
-    }
-    if(entry.rating.isEmpty()) {
-      finalOutput.append("    <rating />\n");
-    } else {
-      finalOutput.append("    <rating>" + StrTools::xmlEscape(entry.rating) + "</rating>\n");
-    }
-    if(entry.description.isEmpty()) {
-      finalOutput.append("    <desc />\n");
-    } else {
-      finalOutput.append("    <desc>" + StrTools::xmlEscape(entry.description.left(config->maxLength)) + "</desc>\n");
-    }
-    if(entry.releaseDate.isEmpty()) {
-      finalOutput.append("    <releasedate />\n");
-    } else {
-      entry.releaseDate.replace("T000000", "");
-      finalOutput.append("    <releasedate>" + StrTools::xmlEscape(entry.releaseDate + (QRegularExpression("T[0-9]{6}$").match(entry.releaseDate).hasMatch()?"":"T000000")) + "</releasedate>\n");
-    }
-    if(entry.developer.isEmpty()) {
-      finalOutput.append("    <developer />\n");
-    } else {
-      finalOutput.append("    <developer>" + StrTools::xmlEscape(entry.developer) + "</developer>\n");
-    }
-    if(entry.publisher.isEmpty()) {
-      finalOutput.append("    <publisher />\n");
-    } else {
-      finalOutput.append("    <publisher>" + StrTools::xmlEscape(entry.publisher) + "</publisher>\n");
-    }
-    if(entry.tags.isEmpty()) {
-      finalOutput.append("    <genre />\n");
-    } else {
-      finalOutput.append("    <genre>" + StrTools::xmlEscape(entry.tags) + "</genre>\n");
-    }
-    if(entry.players.isEmpty()) {
-      finalOutput.append("    <players />\n");
-    } else {
-      finalOutput.append("    <players>" + StrTools::xmlEscape(entry.players) + "</players>\n");
-    }
-    if(!entry.eSSortName.isEmpty()) {
-      finalOutput.append("    <sortname>" + StrTools::xmlEscape(entry.eSSortName) + "</sortname>\n");
-    }
-    if(!entry.eSFavorite.isEmpty()) {
-      finalOutput.append("    <favorite>" + StrTools::xmlEscape(entry.eSFavorite) + "</favorite>\n");
-    }
-    if(!entry.eSHidden.isEmpty()) {
-      finalOutput.append("    <hidden>" + StrTools::xmlEscape(entry.eSHidden) + "</hidden>\n");
-    }
-    if(!entry.eSLastPlayed.isEmpty()) {
-      finalOutput.append("    <lastplayed>" + StrTools::xmlEscape(entry.eSLastPlayed) + "</lastplayed>\n");
-    }
-    if(!entry.eSPlayCount.isEmpty()) {
-      finalOutput.append("    <playcount>" + StrTools::xmlEscape(entry.eSPlayCount) + "</playcount>\n");
-    }
-    if(entry.eSKidGame.isEmpty()) {
-      if(!entry.ages.isEmpty() && (entry.ages.toInt() >= 1 && entry.ages.toInt() <= 10)) {
-	finalOutput.append("    <kidgame>true</kidgame>\n");
-      }
-    } else {
-      finalOutput.append("    <kidgame>" + StrTools::xmlEscape(entry.eSKidGame) + "</kidgame>\n");
-    }
-    finalOutput.append("  </" + entryType + ">\n");
-  }
-  finalOutput.append("</gameList>");
+    finalOutput.append("</gameList>\n");
 }
 
-bool EmulationStation::canSkip()
-{
-  return true;
+void EmulationStation::addFolder(QString &base, QString sub,
+                                 QList<GameEntry> &added) {
+    bool found = false;
+    QString absPath = base % "/" % sub;
+
+    /*
+     RetroPie/roms/scummvm/blarf.svm/blarf.svm -> leaf (fs-file) is <game/> and
+
+     RetroPie/roms/scummvm/blarf.svm/blarf.svm -> parent fs-folder also <game/>
+
+     RetroPie/roms/scummvm/blarf.svm/yadda/blarf.svm -> yadda as
+       <folder/>, blarf.svm (fs-file and fs-folder) both as <game/>
+    */
+
+    for (auto &entry : added) {
+        // check the to-be-added folder entries
+        if (entry.path == absPath) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found && !isGameLauncher(sub)) {
+        GameEntry fe;
+        fe.path = absPath;
+        fe.title = sub.mid(sub.lastIndexOf('/') + 1, sub.length());
+        fe.isFolder = true;
+        qDebug() << "addFolder() adding folder elem, path:" << fe.path
+                 << "with title/name:" << fe.title << ", addFolders flag is"
+                 << config->addFolders;
+        added.append(fe);
+    }
+
+    if (sub.contains('/')) {
+        // one folder up
+        sub = sub.left(sub.lastIndexOf('/'));
+        addFolder(base, sub, added);
+    }
 }
 
-QString EmulationStation::getGameListFileName()
-{
-  return QString("gamelist.xml");
+bool EmulationStation::isGameLauncher(QString &sub) {
+    bool folderIsGameLauncher = false;
+    if (config->platform == "scummvm") {
+        QStringList exts = platformFileExtensions().split(" ");
+        for (auto ext : exts) {
+            QRegExp re(ext);
+            re.setPatternSyntax(QRegExp::Wildcard);
+            if (re.exactMatch(sub.toLower())) {
+                qDebug() << "Match: " << sub;
+                // do not add if .svm or other extension is used in
+                // fs-foldername
+                folderIsGameLauncher = true;
+                break;
+            }
+        }
+    }
+    return folderIsGameLauncher;
 }
 
-QString EmulationStation::getInputFolder()
-{
-  return QString(QDir::homePath() + "/RetroPie/roms/" + config->platform);
+QString EmulationStation::createXml(GameEntry &entry) {
+    QStringList l;
+    bool addEmptyElem;
+    if (gamelistFormat() == GameEntry::Format::ESDE) {
+        addEmptyElem = false;
+    } else {
+        addEmptyElem = !entry.isFolder;
+    }
+    QString entryType = QString(entry.isFolder ? "folder" : "game");
+    l.append("  <" % entryType % ">");
+
+    l.append(elem("path", entry.path, addEmptyElem));
+    l.append(elem("name", entry.title, addEmptyElem));
+
+    l += createEsVariantXml(entry);
+
+    l.append(elem("rating", entry.rating, addEmptyElem));
+    l.append(elem("desc", entry.description, addEmptyElem));
+
+    QString released = entry.releaseDate;
+    QRegularExpressionMatch m = isoTimeRe().match(released);
+    if (!m.hasMatch()) {
+        released = released % "T000000";
+    }
+    l.append(elem("releasedate", released, addEmptyElem));
+
+    l.append(elem("developer", entry.developer, addEmptyElem));
+    l.append(elem("publisher", entry.publisher, addEmptyElem));
+    l.append(elem("genre", entry.tags, addEmptyElem));
+    l.append(elem("players", entry.players, addEmptyElem));
+
+    // non scraper elements
+    for (const auto &t : extraGamelistTags(entry.isFolder)) {
+        if (t != "kidgame") {
+            l.append(elem(t, entry.getEsExtra(t), false));
+        }
+    }
+    QString kidGame = entry.getEsExtra("kidgame");
+    if (kidGame.isEmpty() && entry.ages.toInt() >= 1 &&
+        entry.ages.toInt() <= 10) {
+        kidGame = "true";
+    }
+
+    l.append(elem("kidgame", kidGame, false));
+
+    l.append("  </" % entryType % ">");
+    l.removeAll("");
+
+    return l.join("\n") % "\n";
 }
 
-QString EmulationStation::getGameListFolder()
-{
-  return config->inputFolder;
+QString EmulationStation::elem(const QString &elem, const QString &data,
+                               bool addEmptyElem, bool isPath) {
+    QString e;
+    if (data.isEmpty()) {
+        if (addEmptyElem) {
+            e = QString("    <%1/>").arg(elem);
+        }
+    } else {
+        QString d = data;
+        if (isPath && config->relativePaths) {
+            // The replace here IS supposed to be 'inputFolder' and not
+            // 'mediaFolder' because we only want the path to be relative if
+            // '-o' hasn't been set. So this will only make it relative if the
+            // path is equal to inputFolder which is what we want.
+            d = d.replace(config->inputFolder, ".");
+        }
+        d = StrTools::xmlEscape(d);
+        e = QString("    <%1>%2</%1>").arg(elem, d);
+    }
+    return e;
 }
 
-QString EmulationStation::getCoversFolder()
-{
-  return config->mediaFolder + "/covers";
+QStringList EmulationStation::createEsVariantXml(const GameEntry &entry) {
+    QStringList l;
+    bool addEmptyElem = !entry.isFolder;
+    l.append(elem("thumbnail", entry.coverFile, addEmptyElem, true));
+    l.append(elem("image", entry.screenshotFile, addEmptyElem, true));
+    l.append(elem("marquee", entry.marqueeFile, addEmptyElem, true));
+    l.append(elem("texture", entry.textureFile, addEmptyElem, true));
+
+    QString vidFile = entry.videoFile;
+    if (!config->videos) {
+        vidFile = "";
+    }
+    l.append(elem("video", vidFile, addEmptyElem, true));
+
+    if (config->manuals &&
+        config->gameListVariants.contains("enable-manuals") &&
+        !entry.manualSrc.isEmpty()) {
+        l.append(elem("manual", entry.manualFile, false, true));
+    }
+    return l;
 }
 
-QString EmulationStation::getScreenshotsFolder()
-{
-  return config->mediaFolder + "/screenshots";
+bool EmulationStation::canSkip() { return true; }
+
+QString EmulationStation::getGameListFileName() {
+    return QString("gamelist.xml");
 }
 
-QString EmulationStation::getWheelsFolder()
-{
-  return config->mediaFolder + "/wheels";
+QString EmulationStation::getInputFolder() {
+    return QString(QDir::homePath() % "/RetroPie/roms/" % config->platform);
 }
 
-QString EmulationStation::getMarqueesFolder()
-{
-  return config->mediaFolder + "/marquees";
+QString EmulationStation::getGameListFolder() { return config->inputFolder; }
+
+QString EmulationStation::getCoversFolder() {
+    return config->mediaFolder % "/covers";
 }
 
-QString EmulationStation::getVideosFolder()
-{
-  return config->mediaFolder + "/videos";
+QString EmulationStation::getScreenshotsFolder() {
+    return config->mediaFolder % "/screenshots";
+}
+
+QString EmulationStation::getWheelsFolder() {
+    return config->mediaFolder % "/wheels";
+}
+
+QString EmulationStation::getMarqueesFolder() {
+    return config->mediaFolder % "/marquees";
+}
+
+QString EmulationStation::getTexturesFolder() {
+    return config->mediaFolder % "/textures";
+}
+
+QString EmulationStation::getVideosFolder() {
+    return config->mediaFolder % "/videos";
+}
+
+QString EmulationStation::getManualsFolder() {
+    return config->mediaFolder % "/manuals";
 }

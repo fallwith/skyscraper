@@ -26,19 +26,17 @@
 #ifndef FXMASK_H
 #define FXMASK_H
 
-#include <QImage>
-
 #include "layer.h"
 #include "settings.h"
 
-class FxMask : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxMask : public QObject {
+    Q_OBJECT
 
 public:
-  FxMask();
-  QImage applyEffect(const QImage &src, const Layer &layer, Settings *config);
-
+    FxMask();
+    QImage applyEffect(const QImage &src, const Layer &layer, Settings *config);
 };
 
 #endif // FXMASK_H

@@ -1,5 +1,5 @@
 ; --------------------------------------------------------------------
-; Skyscraper by Lars Muldjord (https://github.com/muldjord/skyscraper)
+; Skyscraper by Lars Muldjord (https://github.com/Gemba/skyscraper)
 ; --------------------------------------------------------------------
 
 ; This is an example config file for use with Skyscraper. Use it as a template for creating
@@ -38,11 +38,13 @@
 ;cacheScreenshots="true"
 ;cacheWheels="true"
 ;cacheMarquees="true"
+;cacheTextures="true"
 ;importFolder="/home/pi/.skyscraper/import"
 ;unpack="false"
 ;frontend="emulationstation"
 ;emulator=""
 ;launch=""
+;manuals="false"
 ;videos="false"
 ;videoSizeLimit="42"
 ;videoConvertCommand="ffmpeg -i %i -y -pix_fmt yuv420p -t 00:00:10 -c:v libx264 -crf 23 -c:a aac -b:a 64k -vf scale=640:480:force_original_aspect_ratio=decrease,pad=640:480:(ow-iw)/2:(oh-ih)/2,setsar=1 %o"
@@ -71,6 +73,8 @@
 ;subdirs="true"
 ;spaceCheck="true"
 ;scummIni="/full/path/to/scummvm.ini"
+;tidyDesc="true"
+;onlyMissing="false"
 
 ; The following is an example of configs that only affect the 'snes' platform.
 ;[snes]
@@ -89,6 +93,7 @@
 ;cacheScreenshots="true"
 ;cacheWheels="true"
 ;cacheMarquees="true"
+;cacheTextures="true"
 ;importFolder="/home/pi/.skyscraper/import/amiga"
 ;unpack="false"
 ;emulator=""
@@ -118,6 +123,11 @@
 ;extensions="*.zip *.uae *.adf"
 ;addExtensions="*.zst *.rom"
 ;subdirs="true"
+
+; The following is an example of configs that only affect the 'emulationstation' frontend.
+[emulationstation]
+;addFolders="false"
+;gameListVariants="enable-manuals"
 
 ; The following is an example of configs that only affect the 'pegasus' frontend.
 ;[pegasus]
@@ -154,6 +164,7 @@
 ;cacheScreenshots="true"
 ;cacheWheels="true"
 ;cacheMarquees="true"
+;cacheTextures="true"
 ;videos="false"
 ;videoSizeLimit="42"
 ;videoConvertCommand="ffmpeg -i %i -y -pix_fmt yuv420p -t 00:00:10 -c:v libx264 -crf 23 -c:a aac -b:a 64k -vf scale=640:480:force_original_aspect_ratio=decrease,pad=640:480:(ow-iw)/2:(oh-ih)/2,setsar=1 %o"
@@ -163,6 +174,5 @@
 
 [esgamelist]
 cacheRefresh="true"
-
-[import]
-cacheRefresh="true"
+; https://github.com/RetroPie/RetroPie-Setup/pull/3704
+cacheScreenshots="false"

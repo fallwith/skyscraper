@@ -1,0 +1,3 @@
+Makefile
+*.o
+strtools_test

@@ -1,0 +1,24 @@
+#!/bin/bash
+set -euo pipefail
+set -x
+
+export SKYSCRAPER_HOME="$(cd "$(dirname "$0")/../.." && pwd)"
+source "${SKYSCRAPER_HOME}/supplementary/workflows/core.sh"
+
+main() {
+  mkdir -p "$TARGET_PATH" || true
+   
+  local bin="$TARGET_BIN"
+  if command -v "${PKG_BIN_NAME}"; then
+    bin="$(which "${PKG_BIN_NAME}")"
+  fi
+
+  sudo cp "$bin" "${TARGET_PATH}/${PKG_NAME}"
+
+  cd "$TARGET_PATH"
+  ls -la .
+  tar -czf "${PKG_NAME}.tar.gz" "${PKG_NAME}"
+  ls -la .
+}
+
+main

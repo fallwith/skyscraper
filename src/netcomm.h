@@ -31,34 +31,35 @@
 #include <QNetworkReply>
 #include <QTimer>
 
-class NetComm : public QObject
-{
-  Q_OBJECT
+class NetComm : public QObject {
+    Q_OBJECT
 
 public:
-  NetComm(QSharedPointer<NetManager> manager);
-  void request(QString query, QString postData = QString(), QList<QPair<QString, QString> > headers = QList<QPair<QString, QString> >());
-  QByteArray getData();
-  QNetworkReply::NetworkError getError(const int &verbosity = 0);
-  QByteArray getContentType();
-  QByteArray getRedirUrl();
+    NetComm(QSharedPointer<NetManager> manager);
+    void request(QString query, QString postData = QString(),
+                 QList<QPair<QString, QString>> headers =
+                     QList<QPair<QString, QString>>());
+    QByteArray getData();
+    QNetworkReply::NetworkError getError(const int &verbosity = 0);
+    QByteArray getContentType();
+    QByteArray getRedirUrl();
 
 private slots:
-  void replyReady();
-  void dataDownloaded(qint64 bytesReceived, qint64);
-  void requestTimeout();
+    void replyReady();
+    void dataDownloaded(qint64 bytesReceived, qint64);
+    void requestTimeout();
 
 signals:
-  void dataReady();
+    void dataReady();
 
 private:
-  QSharedPointer<NetManager> manager;
-  QTimer requestTimer;
-  QByteArray data;
-  QNetworkReply::NetworkError error;
-  QByteArray contentType;
-  QByteArray redirUrl;
-  QNetworkReply *reply;
+    QSharedPointer<NetManager> manager;
+    QTimer requestTimer;
+    QByteArray data;
+    QNetworkReply::NetworkError error;
+    QByteArray contentType;
+    QByteArray redirUrl;
+    QNetworkReply *reply;
 };
 
 #endif // NETCOMM_H

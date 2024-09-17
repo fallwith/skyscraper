@@ -26,18 +26,16 @@
 #ifndef FXROUNDED_H
 #define FXROUNDED_H
 
-#include <QImage>
-
 #include "layer.h"
 
-class FxRounded : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxRounded : public QObject {
+    Q_OBJECT
 
 public:
-  FxRounded();
-  QImage applyEffect(const QImage &src, const Layer &layer);
-
+    FxRounded();
+    QImage applyEffect(const QImage &src, const Layer &layer);
 };
 
 #endif // FXROUNDED_H

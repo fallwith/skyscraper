@@ -1,0 +1,81 @@
+#!/bin/bash
+set -euo pipefail
+set -x
+
+export SKYSCRAPER_HOME="$(cd "$(dirname "$0")/../.." && pwd)"
+source "${SKYSCRAPER_HOME}/supplementary/workflows/core.sh"
+
+get_platform() {
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "osx"  
+  elif echo "${PREFIX:-}" | grep -q "com.termux"; then
+    echo "termux"
+  else
+    echo "linux"
+  fi
+}
+
+export PLATFORM="$(get_platform)"
+
+_install() { 
+   local deps=()
+
+   for dep in "$@"; do
+      if ! command -v "$dep"; then 
+         deps+=("$dep");
+      fi
+   done
+
+   if [ ${#deps[@]} -eq 0 ]; then
+      return 0
+   fi
+
+   case "$PLATFORM" in
+      "osx") brew install "${deps[@]}" ;;
+      "termux") pkg upgrade && pkg add "${deps[@]}" ;;
+      "linux") sudo apt update && sudo apt install -y "${deps[@]}" ;;
+   esac
+} 
+
+_setup_termux() {
+   cd "$SKYSCRAPER_HOME"
+
+   mkdir ./buildsrc
+   cp -R ./* ./buildsrc || true
+
+   git clone https://github.com/termux/termux-packages --depth 1
+
+   git clone https://github.com/termux/x11-packages --depth 1 || true
+   cp -r ./x11-packages/packages/* "./termux-packages/packages" || true
+   
+   mkdir -p "./termux-packages/packages/${PKG_NAME}" || true
+   rm "./termux-packages/packages/${PKG_NAME}/build.sh" || true
+   cp ./supplementary/workflows/build.sh "./termux-packages/packages/${PKG_NAME}/build.sh"
+   mv ./buildsrc ./termux-packages/packages/
+}
+
+main() {
+   case "${1:-}" in
+      *android*) 
+         _setup_termux
+         return 0
+         ;;
+   esac
+
+  _install git bash tar
+
+  case "$PLATFORM" in
+    "osx")
+      _install brew qt5
+      brew link qt5 --force || true
+      ;;
+    "termux")
+      _install x11-repo qt5-qtbase
+      ;;
+    "linux")
+      _install build-essential qtbase5-dev qt5-qmake qtbase5-dev-tools
+      ;;
+   esac
+}
+
+main "$@"

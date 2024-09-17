@@ -28,50 +28,74 @@
 
 #include "abstractscraper.h"
 
-class ImportScraper : public AbstractScraper
-{
-  Q_OBJECT
+#include <QRegularExpression>
+
+class ImportScraper : public AbstractScraper {
+    Q_OBJECT
 
 public:
-  ImportScraper(Settings *config, QSharedPointer<NetManager> manager);
-  void runPasses(QList<GameEntry> &gameEntries, const QFileInfo &info, QString &, QString &) override;
-  void getGameData(GameEntry &game) override;
-  QString getCompareTitle(QFileInfo info) override;
-  void getTitle(GameEntry &game);
-  void getCover(GameEntry &game) override;
-  void getScreenshot(GameEntry &game) override;
-  void getWheel(GameEntry &game) override;
-  void getMarquee(GameEntry &game) override;
-  void getVideo(GameEntry &game) override;
+    ImportScraper(Settings *config, QSharedPointer<NetManager> manager);
+    void runPasses(QList<GameEntry> &gameEntries, const QFileInfo &info,
+                   QString &, QString &) override;
+    void getGameData(GameEntry &game) override;
+    QString getCompareTitle(const QFileInfo &info) override;
+
+    void getAges(GameEntry &game) override;
+    void getCover(GameEntry &game) override;
+    void getDescription(GameEntry &game) override;
+    void getDeveloper(GameEntry &game) override;
+    void getMarquee(GameEntry &game) override;
+    void getPlayers(GameEntry &game) override;
+    void getPublisher(GameEntry &game) override;
+    void getRating(GameEntry &game) override;
+    void getReleaseDate(GameEntry &game) override;
+    void getScreenshot(GameEntry &game) override;
+    void getTags(GameEntry &game) override;
+    void getTexture(GameEntry &game) override;
+    void getTitle(GameEntry &game) override;
+    void getVideo(GameEntry &game) override;
+    void getManual(GameEntry &game) override;
+    void getWheel(GameEntry &game) override;
 
 private:
-  bool checkType(QString baseName, QList<QFileInfo> &infos, QString &inputFile);
-  bool loadDefinitions();
-  void loadData();
-  void checkForTag(QList<QString> &pre, QString &post, QString &tag, QString &line);
+    bool checkType(QString baseName, QList<QFileInfo> &infos,
+                   QString &inputFile);
+    bool loadDefinitions();
+    void loadData();
+    bool checkForTag(QList<QString> &pre, QString &post, QString &tag,
+                     QString &line);
+    QString getElementText(QStringList e);
+    QByteArray readFile(const QString &fn);
 
-  QString titleTag = "###TITLE###";
-  QString descriptionTag = "###DESCRIPTION###";
-  QString developerTag = "###DEVELOPER###";
-  QString publisherTag = "###PUBLISHER###";
-  QString playersTag = "###PLAYERS###";
-  QString agesTag = "###AGES###";
-  QString ratingTag = "###RATING###";
-  QString tagsTag = "###TAGS###";
-  QString releaseDateTag = "###RELEASEDATE###";
+    QString titleTag = "###TITLE###";
+    QString descriptionTag = "###DESCRIPTION###";
+    QString developerTag = "###DEVELOPER###";
+    QString publisherTag = "###PUBLISHER###";
+    QString playersTag = "###PLAYERS###";
+    QString agesTag = "###AGES###";
+    QString ratingTag = "###RATING###";
+    QString tagsTag = "###TAGS###";
+    QString releaseDateTag = "###RELEASEDATE###";
 
-  QList<QFileInfo> textual;
-  QList<QFileInfo> covers;
-  QList<QFileInfo> screenshots;
-  QList<QFileInfo> wheels;
-  QList<QFileInfo> marquees;
-  QList<QFileInfo> videos;
-  QString textualFile = "";
-  QString coverFile = "";
-  QString screenshotFile = "";
-  QString wheelFile = "";
-  QString marqueeFile = "";
-  QString videoFile = "";
+    QList<QFileInfo> textual;
+    QList<QFileInfo> covers;
+    QList<QFileInfo> screenshots;
+    QList<QFileInfo> wheels;
+    QList<QFileInfo> marquees;
+    QList<QFileInfo> textures;
+    QList<QFileInfo> videos;
+    QList<QFileInfo> manuals;
+    QString textualFile = "";
+    QString coverFile = "";
+    QString screenshotFile = "";
+    QString wheelFile = "";
+    QString marqueeFile = "";
+    QString textureFile = "";
+    QString videoFile = "";
+    QString manualFile = "";
+
+    // true if definition.dat is XML style
+    bool isXml;
 };
 
 #endif // IMPORTSCRAPER_H

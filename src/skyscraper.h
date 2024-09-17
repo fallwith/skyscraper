@@ -26,74 +26,86 @@
 #ifndef SKYSCRAPER_H
 #define SKYSCRAPER_H
 
+#include "abstractfrontend.h"
+#include "cache.h"
 #include "netcomm.h"
 #include "netmanager.h"
-#include "scraperworker.h"
-#include "cache.h"
-#include "abstractfrontend.h"
-#include "settings.h"
 #include "platform.h"
-
-#include <QObject>
-#include <QFile>
-#include <QElapsedTimer>
+#include "scraperworker.h"
+#include "settings.h"
 
 #include <QCommandLineParser>
+#include <QElapsedTimer>
+#include <QFile>
+#include <QObject>
 
-class Skyscraper : public QObject
-{
-  Q_OBJECT
+class Skyscraper : public QObject {
+    Q_OBJECT
 
 public:
-  Skyscraper(const QCommandLineParser &parser, const QString &currentDir);
-  ~Skyscraper();
-  QSharedPointer<Queue> queue;
-  QSharedPointer<NetManager> manager;
-  int state = 0;
+    Skyscraper(const QCommandLineParser &parser, const QString &currentDir);
+    ~Skyscraper();
+    QSharedPointer<Queue> queue;
+    QSharedPointer<NetManager> manager;
+    enum OpMode { SINGLE, NO_INTR, CACHE_EDIT, THREADED };
+    int state = SINGLE;
 
 public slots:
-  void run();
+    void run();
 
 signals:
-  void finished();
+    void finished();
 
 private slots:
-  void entryReady(const GameEntry &entry, const QString &output, const QString &debug);
-  void checkThreads();
+    void entryReady(const GameEntry &entry, const QString &output,
+                    const QString &debug);
+    void checkThreads();
 
 private:
-  Settings config;
-  void loadConfig(const QCommandLineParser &parser);
-  void copyFile(const QString &distro, const QString &current, bool overwrite = true);
-  QString secsToString(const int &seconds);
-  void checkForFolder(QDir &folder, bool create = true);
-  void showHint();
-  void doPrescrapeJobs();
-  void loadAliasMap();
-  void loadMameMap();
-  void loadWhdLoadMap();
-  void setRegionPrios();
-  void setLangPrios();
-  //void migrate(QString filename);
+    Settings config;
+    void loadConfig(const QCommandLineParser &parser);
+    QString secsToString(const int &seconds);
+    void checkForFolder(QDir &folder, bool create = true);
+    void showHint();
+    void prepareScraping();
+    void prepareFileQueue();
+    void updateWhdloadDb(NetComm &netComm, QEventLoop &q);
+    void prepareIgdb(NetComm &netComm, QEventLoop &q);
+    void prepareScreenscraper(NetComm &netComm, QEventLoop &q);
+    void loadAliasMap();
+    void loadMameMap();
+    void loadWhdLoadMap();
+    void setRegionPrios();
+    void setLangPrios();
+    QString normalizePath(QFileInfo fileInfo);
+    // void migrate(QString filename);
+    const inline QString platformFileExtensions() {
+        return Platform::get().getFormats(config.platform, config.extensions,
+                                          config.addExtensions);
+    }
+    void setFolder(const bool doCacheScraping, QString &outFolder,
+                   const bool createMissingFolder = true);
 
-  AbstractFrontend *frontend;
+    AbstractFrontend *frontend;
 
-  QSharedPointer<Cache> cache;
+    QSharedPointer<Cache> cache;
 
-  QList<GameEntry> gameEntries;
-  QList<QString> cliFiles;
-  QMutex entryMutex;
-  QMutex checkThreadMutex;
-  QElapsedTimer timer;
-  QString gameListFileString;
-  QString skippedFileString;
-  int doneThreads;
-  int notFound;
-  int found;
-  int avgSearchMatch;
-  int avgCompleteness;
-  int currentFile;
-  int totalFiles;
+    QList<GameEntry> gameEntries;
+    QList<QString> cliFiles;
+    QMutex entryMutex;
+    QMutex checkThreadMutex;
+    QElapsedTimer timer;
+    QString gameListFileString;
+    QString skippedFileString;
+    int doneThreads;
+    int notFound;
+    int found;
+    int avgSearchMatch;
+    int avgCompleteness;
+    int currentFile;
+    int totalFiles;
+    bool cacheScrapeMode; // config.scraper == "cache"
+    bool doCacheScraping; // cacheScrapeMode && pretend == false
 };
 
 #endif // SKYSCRAPER_H

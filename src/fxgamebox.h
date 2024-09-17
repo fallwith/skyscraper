@@ -26,23 +26,22 @@
 #ifndef FXGAMEBOX_H
 #define FXGAMEBOX_H
 
-#include <QImage>
-
-#include "layer.h"
 #include "gameentry.h"
+#include "layer.h"
 #include "settings.h"
 
-class FxGamebox : public QObject
-{
-  Q_OBJECT
+#include <QImage>
+
+class FxGamebox : public QObject {
+    Q_OBJECT
 
 public:
-  FxGamebox();
-  QImage applyEffect(const QImage &src, const Layer &layer, const GameEntry &game, Settings *config);
+    FxGamebox();
+    QImage applyEffect(const QImage &src, const Layer &layer,
+                       const GameEntry &game, Settings *config);
 
 private:
-  void fillWithAvg(const QImage &src, QImage &dst);
-
+    void fillWithAvg(const QImage &src, QImage &dst);
 };
 
 #endif // FXGAMEBOX_H
